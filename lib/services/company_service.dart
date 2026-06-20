@@ -1,4 +1,3 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_service.dart';
 import '../models/db_models.dart';
 import 'local_db.dart';

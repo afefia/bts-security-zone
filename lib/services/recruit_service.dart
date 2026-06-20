@@ -3,7 +3,6 @@ import '../config/supabase_service.dart';
 import '../models/db_models.dart';
 import 'local_db.dart';
 import 'connectivity_service.dart';
-import 'sync_service.dart';
 import 'fingerprint_service.dart';
 import '../utils/validators.dart';
 

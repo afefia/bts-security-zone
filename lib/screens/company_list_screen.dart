@@ -4,6 +4,7 @@ import '../models/db_models.dart';
 import '../services/company_service.dart';
 import '../widgets/connectivity_banner.dart';
 import '../widgets/app_button.dart';
+import '../widgets/app_max_width.dart';
 
 class CompanyListScreen extends StatefulWidget {
   const CompanyListScreen({super.key});
@@ -80,19 +81,21 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                   onRefresh: _loadCompanies,
                   color: AppTheme.goldAccent,
                   backgroundColor: AppTheme.cardBg,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        const ConnectivityBanner(),
+                  child: AppMaxWidth(
+                    maxWidth: 700,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          const ConnectivityBanner(),
 
-                        if (_fromCache) ...[
-                          Container(
-                            width: double.infinity,
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
+                          if (_fromCache) ...[
+                            Container(
+                              width: double.infinity,
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
                               color: AppTheme.goldAccent.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
@@ -241,6 +244,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                                 ),
                         ),
                       ],
+                    ),
                     ),
                   ),
                 ),

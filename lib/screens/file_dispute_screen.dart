@@ -5,6 +5,7 @@ import '../models/db_models.dart';
 import '../services/dispute_service.dart';
 import '../utils/validators.dart';
 import '../widgets/app_button.dart';
+import '../widgets/app_max_width.dart';
 
 class FileDisputeScreen extends StatefulWidget {
   final DbConductRecord record;
@@ -98,11 +99,12 @@ class _FileDisputeScreenState extends State<FileDisputeScreen> {
       appBar: AppBar(title: const Text('File a Dispute')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: AppMaxWidth(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // Record summary
               Container(
                 padding: const EdgeInsets.all(16),
@@ -272,6 +274,7 @@ class _FileDisputeScreenState extends State<FileDisputeScreen> {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

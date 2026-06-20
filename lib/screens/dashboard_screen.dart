@@ -14,6 +14,7 @@ import '../services/push_notification_service.dart';
 import '../config/supabase_service.dart';
 import '../widgets/connectivity_banner.dart';
 import '../widgets/app_button.dart';
+import '../widgets/app_max_width.dart';
 import 'search_screen.dart';
 import 'recruit_profile_screen.dart';
 import 'company_list_screen.dart';
@@ -179,25 +180,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   onRefresh: _loadData,
                   color: AppTheme.goldAccent,
                   backgroundColor: AppTheme.cardBg,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const ConnectivityBanner(),
+                  child: AppMaxWidth(
+                    maxWidth: 700,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const ConnectivityBanner(),
 
-                        // Welcome
-                        _buildWelcomeBanner(context),
-                        const SizedBox(height: 20),
+                          // Welcome
+                          _buildWelcomeBanner(context),
+                          const SizedBox(height: 20),
 
-                        // Stats row
-                        Row(
-                          children: [
-                            _StatCard(
-                              label: 'Recruits',
-                              value: '${_recruits.length}',
-                              icon: Icons.people,
+                          // Stats row
+                          Row(
+                            children: [
+                              _StatCard(
+                                label: 'Recruits',
+                                value: '${_recruits.length}',
+                                icon: Icons.people,
                               color: AppTheme.successGreen,
                             ),
                             const SizedBox(width: 12),
@@ -331,6 +334,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     onReturn: _loadData,
                                   )),
                       ],
+                    ),
                     ),
                   ),
                 ),

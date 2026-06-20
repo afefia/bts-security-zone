@@ -3,6 +3,7 @@ import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
 import '../utils/validators.dart';
 import '../widgets/app_button.dart';
+import '../widgets/app_max_width.dart';
 import 'login_screen.dart';
 
 /// Reached via the deep link Supabase sends in a password reset email
@@ -74,12 +75,13 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
       appBar: AppBar(title: const Text('Set New Password')),
       body: Padding(
         padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.lock_reset, color: AppTheme.goldAccent, size: 48),
+        child: AppMaxWidth(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.lock_reset, color: AppTheme.goldAccent, size: 48),
               const SizedBox(height: 16),
               Text(
                 'Choose a new password for your account.',
@@ -143,6 +145,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

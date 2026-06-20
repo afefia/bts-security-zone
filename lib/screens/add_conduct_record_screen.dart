@@ -7,6 +7,7 @@ import '../services/connectivity_service.dart';
 import '../config/supabase_service.dart';
 import '../widgets/connectivity_banner.dart';
 import '../widgets/app_button.dart';
+import '../widgets/app_max_width.dart';
 import '../utils/validators.dart';
 
 class AddConductRecordScreen extends StatefulWidget {
@@ -164,12 +165,13 @@ class _AddConductRecordScreenState extends State<AddConductRecordScreen> {
       appBar: AppBar(title: const Text('Add Conduct Record')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const ConnectivityBanner(),
+        child: AppMaxWidth(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const ConnectivityBanner(),
 
               // Recruit info banner
               Container(
@@ -389,6 +391,7 @@ class _AddConductRecordScreenState extends State<AddConductRecordScreen> {
 
             ],
           ),
+        ),
         ),
       ),
     );

@@ -7,6 +7,7 @@ import '../services/connectivity_service.dart';
 import '../config/supabase_service.dart';
 import '../widgets/connectivity_banner.dart';
 import '../widgets/app_button.dart';
+import '../widgets/app_max_width.dart';
 import '../utils/validators.dart';
 
 class RegisterRecruitScreen extends StatefulWidget {
@@ -156,13 +157,14 @@ class _RegisterRecruitScreenState extends State<RegisterRecruitScreen> {
       appBar: AppBar(title: const Text('Register Recruit')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const ConnectivityBanner(),
-              _sectionLabel(context, 'PERSONAL INFORMATION'),
+        child: AppMaxWidth(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const ConnectivityBanner(),
+                _sectionLabel(context, 'PERSONAL INFORMATION'),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _nameCtrl,
@@ -359,6 +361,7 @@ class _RegisterRecruitScreenState extends State<RegisterRecruitScreen> {
               const SizedBox(height: 24),
             ],
           ),
+        ),
         ),
       ),
     );

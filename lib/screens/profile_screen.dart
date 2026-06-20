@@ -5,6 +5,7 @@ import '../services/company_service.dart';
 import '../models/db_models.dart';
 import '../utils/validators.dart';
 import '../widgets/app_button.dart';
+import '../widgets/app_max_width.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -105,14 +106,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: CircularProgressIndicator(color: AppTheme.goldAccent))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: CircleAvatar(
-                        radius: 36,
+              child: AppMaxWidth(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: CircleAvatar(
+                          radius: 36,
                         backgroundColor: AppTheme.goldAccent,
                         child: Text(
                           (_profile?.fullName.isNotEmpty == true)
@@ -209,6 +211,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
+            ),
             ),
     );
   }

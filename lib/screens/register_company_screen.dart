@@ -3,6 +3,7 @@ import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
 import '../utils/validators.dart';
 import '../widgets/app_button.dart';
+import '../widgets/app_max_width.dart';
 
 class RegisterCompanyScreen extends StatefulWidget {
   const RegisterCompanyScreen({super.key});
@@ -169,13 +170,15 @@ class _RegisterCompanyScreenState extends State<RegisterCompanyScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Register Company')),
-      body: Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: Theme.of(context)
-              .colorScheme
-              .copyWith(primary: AppTheme.goldAccent),
-        ),
-        child: Stepper(
+      body: AppMaxWidth(
+        maxWidth: 600,
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context)
+                .colorScheme
+                .copyWith(primary: AppTheme.goldAccent),
+          ),
+          child: Stepper(
           currentStep: _currentStep,
           onStepContinue: () {
             if (_currentStep < 2) setState(() => _currentStep++);
@@ -403,6 +406,7 @@ class _RegisterCompanyScreenState extends State<RegisterCompanyScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

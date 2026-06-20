@@ -3,6 +3,7 @@ import '../theme/app_theme.dart';
 import '../models/db_models.dart';
 import '../services/alerts_service.dart';
 import '../widgets/app_button.dart';
+import '../widgets/app_max_width.dart';
 
 class AlertsScreen extends StatefulWidget {
   const AlertsScreen({super.key});
@@ -106,48 +107,50 @@ class _AlertsScreenState extends State<AlertsScreen> {
             );
           }
 
-          return Column(
-            children: [
-              if (unread > 0)
-                Container(
-                  width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  color: AppTheme.navyMid,
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppTheme.dangerRed.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                              color: AppTheme.dangerRed.withOpacity(0.5)),
-                        ),
-                        child: Text(
-                          '$unread unread',
-                          style: const TextStyle(
-                            color: AppTheme.dangerRed,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
+          return AppMaxWidth(
+            maxWidth: 700,
+            child: Column(
+              children: [
+                if (unread > 0)
+                  Container(
+                    width: double.infinity,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    color: AppTheme.navyMid,
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppTheme.dangerRed.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: AppTheme.dangerRed.withOpacity(0.5)),
+                          ),
+                          child: Text(
+                            '$unread unread',
+                            style: const TextStyle(
+                              color: AppTheme.dangerRed,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'You have $unread new notification${unread > 1 ? 's' : ''}',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
+                        const SizedBox(width: 10),
+                        Text(
+                          'You have $unread new notification${unread > 1 ? 's' : ''}',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: alerts.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, i) {
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: alerts.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (context, i) {
                     final alert = alerts[i];
                     return GestureDetector(
                       onTap: () => _alertsService.markRead(alert.id),
@@ -273,6 +276,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                 ),
               ),
             ],
+          ),
           );
         },
       ),

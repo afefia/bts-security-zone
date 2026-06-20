@@ -6,6 +6,7 @@ import '../services/admin_service.dart';
 import '../services/company_service.dart';
 import '../services/dispute_service.dart';
 import '../widgets/app_button.dart';
+import '../widgets/app_max_width.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   const AdminPanelScreen({super.key});
@@ -197,22 +198,24 @@ class _OverviewTabState extends State<_OverviewTab> {
       onRefresh: _loadData,
       color: AppTheme.goldAccent,
       backgroundColor: AppTheme.cardBg,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const _PanelHeader(
-              title: 'Platform Overview',
-              subtitle: 'Real-time summary across all registered companies',
-            ),
-            const SizedBox(height: 16),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 12,
+      child: AppMaxWidth(
+        maxWidth: 700,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _PanelHeader(
+                title: 'Platform Overview',
+                subtitle: 'Real-time summary across all registered companies',
+              ),
+              const SizedBox(height: 16),
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: 12,
               mainAxisSpacing: 12,
               childAspectRatio: 1.6,
               children: statCards.map((s) => _AdminStatCard(stat: s)).toList(),
@@ -237,6 +240,7 @@ class _OverviewTabState extends State<_OverviewTab> {
                     time: _timeAgo(a.createdAt),
                   )),
           ],
+        ),
         ),
       ),
     );
@@ -339,22 +343,24 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
       onRefresh: _loadData,
       color: AppTheme.goldAccent,
       backgroundColor: AppTheme.cardBg,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const _AdminSectionLabel('REGISTRATION TREND — LAST 30 DAYS'),
-            const SizedBox(height: 12),
-            _ChartCard(
-              child: totalRecruits == 0
-                  ? const _EmptyChartState(message: 'No recruits registered yet')
-                  : _TrendLineChart(
-                      data: _registrationTrend,
-                      color: AppTheme.successGreen,
-                    ),
-            ),
+      child: AppMaxWidth(
+        maxWidth: 700,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _AdminSectionLabel('REGISTRATION TREND — LAST 30 DAYS'),
+              const SizedBox(height: 12),
+              _ChartCard(
+                child: totalRecruits == 0
+                    ? const _EmptyChartState(message: 'No recruits registered yet')
+                    : _TrendLineChart(
+                        data: _registrationTrend,
+                        color: AppTheme.successGreen,
+                      ),
+              ),
             const SizedBox(height: 24),
 
             const _AdminSectionLabel('SEARCH ACTIVITY — LAST 30 DAYS'),
@@ -400,6 +406,7 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
             ),
             const SizedBox(height: 16),
           ],
+        ),
         ),
       ),
     );
@@ -998,30 +1005,32 @@ class _DisputesAdminTabState extends State<_DisputesAdminTab> {
       onRefresh: _load,
       color: AppTheme.goldAccent,
       backgroundColor: AppTheme.cardBg,
-      child: _disputes.isEmpty
-          ? ListView(
-              children: [
-                SizedBox(
-                  height: 300,
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.check_circle_outline,
-                            color: AppTheme.successGreen, size: 48),
-                        const SizedBox(height: 16),
-                        Text('No pending disputes',
-                            style: Theme.of(context).textTheme.titleMedium),
-                        const SizedBox(height: 8),
-                        Text('All conduct record disputes have been resolved.',
-                            style: Theme.of(context).textTheme.bodyMedium),
-                      ],
+      child: AppMaxWidth(
+        maxWidth: 700,
+        child: _disputes.isEmpty
+            ? ListView(
+                children: [
+                  SizedBox(
+                    height: 300,
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.check_circle_outline,
+                              color: AppTheme.successGreen, size: 48),
+                          const SizedBox(height: 16),
+                          Text('No pending disputes',
+                              style: Theme.of(context).textTheme.titleMedium),
+                          const SizedBox(height: 8),
+                          Text('All conduct record disputes have been resolved.',
+                              style: Theme.of(context).textTheme.bodyMedium),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
-            )
-          : ListView.builder(
+                ],
+              )
+            : ListView.builder(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
               itemCount: _disputes.length,
@@ -1091,6 +1100,7 @@ class _DisputesAdminTabState extends State<_DisputesAdminTab> {
                   ),
                 );
               },
+            ),
             ),
     );
   }
@@ -1265,30 +1275,32 @@ class _CompaniesAdminTabState extends State<_CompaniesAdminTab> {
       onRefresh: _loadCompanies,
       color: AppTheme.goldAccent,
       backgroundColor: AppTheme.cardBg,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (_fromCache) ...[
-              _BannerAlert(
-                message:
-                    'Offline — showing cached list. Approve/reject requires a connection.',
-                color: AppTheme.goldAccent,
-              ),
-              const SizedBox(height: 12),
-            ],
-            if (pending.isNotEmpty) ...[
-              _BannerAlert(
-                message: '${pending.length} ${pending.length == 1 ? 'company' : 'companies'} awaiting verification',
-                color: AppTheme.goldAccent,
-              ),
-              const SizedBox(height: 16),
-              const _AdminSectionLabel('PENDING APPROVAL'),
-              const SizedBox(height: 8),
-              ...pending.map((c) => _CompanyAdminTile(
-                    company: c,
+      child: AppMaxWidth(
+        maxWidth: 700,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_fromCache) ...[
+                _BannerAlert(
+                  message:
+                      'Offline — showing cached list. Approve/reject requires a connection.',
+                  color: AppTheme.goldAccent,
+                ),
+                const SizedBox(height: 12),
+              ],
+              if (pending.isNotEmpty) ...[
+                _BannerAlert(
+                  message: '${pending.length} ${pending.length == 1 ? 'company' : 'companies'} awaiting verification',
+                  color: AppTheme.goldAccent,
+                ),
+                const SizedBox(height: 16),
+                const _AdminSectionLabel('PENDING APPROVAL'),
+                const SizedBox(height: 8),
+                ...pending.map((c) => _CompanyAdminTile(
+                      company: c,
                     isPending: true,
                     onApprove: () => _showConfirm(c, true),
                     onReject: () => _showConfirm(c, false),
@@ -1311,6 +1323,7 @@ class _CompaniesAdminTabState extends State<_CompaniesAdminTab> {
                     isPending: false,
                   )),
           ],
+        ),
         ),
       ),
     );
@@ -1422,30 +1435,32 @@ class _AuditLogTabState extends State<_AuditLogTab> {
       onRefresh: _loadLog,
       color: AppTheme.goldAccent,
       backgroundColor: AppTheme.cardBg,
-      child: ListView.separated(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        itemCount: _entries.length,
-        separatorBuilder: (_, __) =>
-            const Divider(color: AppTheme.steelBlue, height: 1),
-        itemBuilder: (context, i) {
-          final e = _entries[i];
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _actionColor(e.action).withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    e.action,
-                    style: TextStyle(
-                      color: _actionColor(e.action),
+      child: AppMaxWidth(
+        maxWidth: 700,
+        child: ListView.separated(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          itemCount: _entries.length,
+          separatorBuilder: (_, __) =>
+              const Divider(color: AppTheme.steelBlue, height: 1),
+          itemBuilder: (context, i) {
+            final e = _entries[i];
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _actionColor(e.action).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      e.action,
+                      style: TextStyle(
+                        color: _actionColor(e.action),
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.8,
@@ -1477,6 +1492,7 @@ class _AuditLogTabState extends State<_AuditLogTab> {
             ),
           );
         },
+      ),
       ),
     );
   }

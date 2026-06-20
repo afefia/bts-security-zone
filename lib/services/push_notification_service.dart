@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -22,7 +21,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 /// job is purely the client side: get a token, hand it to Supabase, and
 /// show/react to incoming messages.
 class PushNotificationService {
-  static final PushNotificationService _instance = PushNotificationService._();
+  static final PushNotificationService _instance =
+      PushNotificationService._();
   factory PushNotificationService() => _instance;
   PushNotificationService._();
 
@@ -39,7 +39,8 @@ class PushNotificationService {
     _initialized = true;
 
     try {
-      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+      FirebaseMessaging.onBackgroundMessage(
+          firebaseMessagingBackgroundHandler);
 
       await _setupLocalNotifications();
 
@@ -167,11 +168,6 @@ class PushNotificationService {
 /// see README "Push Notifications" section for what needs to exist
 /// (google-services.json / GoogleService-Info.plist) for this to succeed.
 Future<bool> initializeFirebaseIfConfigured() async {
-  // Firebase Web requires explicit initialization options, which aren't
-  // configured here — skip entirely on web to avoid assertion errors
-  // from firebase_core_web when options are null.
-  if (kIsWeb) return false;
-
   try {
     await Firebase.initializeApp();
     return true;

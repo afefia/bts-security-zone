@@ -5,6 +5,7 @@ import '../services/sync_service.dart';
 import '../services/push_notification_service.dart';
 import '../utils/validators.dart';
 import '../widgets/app_button.dart';
+import '../widgets/app_max_width.dart';
 import 'dashboard_screen.dart';
 import 'register_company_screen.dart';
 
@@ -138,11 +139,12 @@ class _LoginScreenState extends State<LoginScreen>
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
+            child: AppMaxWidth(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
                   const SizedBox(height: 24),
 
                   // Logo
@@ -324,6 +326,7 @@ class _LoginScreenState extends State<LoginScreen>
                         ?.copyWith(fontSize: 11),
                   ),
                 ],
+                ),
               ),
             ),
           ),

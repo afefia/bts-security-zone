@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../models/db_models.dart';
 import '../widgets/connectivity_banner.dart';
 import '../widgets/app_button.dart';
+import '../widgets/app_max_width.dart';
 import '../services/recruit_service.dart';
 import '../services/recruit_pdf_service.dart';
 import '../services/company_service.dart';
@@ -197,7 +198,9 @@ class _RecruitProfileScreenState extends State<RecruitProfileScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
+        child: AppMaxWidth(
+          maxWidth: 600,
+          child: Column(
           children: [
             const ConnectivityBanner(),
             if (_isRefreshing)
@@ -315,6 +318,7 @@ class _RecruitProfileScreenState extends State<RecruitProfileScreen> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );
