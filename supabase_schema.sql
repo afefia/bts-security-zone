@@ -333,14 +333,13 @@ RETURNS BOOLEAN AS $$
   SELECT role = 'admin' FROM users WHERE id = auth.uid();
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
--- ── Helper for idempotent policy creation ────────────────────
--- PostgreSQL has no CREATE POLICY IF NOT EXISTS, so we drop and
--- recreate. DROP IF EXISTS is safe even if the policy doesn't exist.
-
 -- ── Companies ─────────────────────────────────────────────────
-DO $$ BEGIN DROP POLICY IF EXISTS companies_insert_public ON companies; CREATE POLICY "companies_insert_public" ON companies FOR INSERT WITH CHECK (TRUE); EXCEPTION WHEN undefined_table THEN NULL; END $$;
-DO $$ BEGIN DROP POLICY IF EXISTS companies_select_own ON companies; CREATE POLICY "companies_select_own" ON companies FOR SELECT USING (id = my_company_id() OR is_admin()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
-DO $$ BEGIN DROP POLICY IF EXISTS companies_update_admin ON companies; CREATE POLICY "companies_update_admin" ON companies FOR UPDATE USING (is_admin()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DROP POLICY IF EXISTS companies_insert_public ON companies;
+CREATE POLICY "companies_insert_public" ON companies FOR INSERT WITH CHECK (TRUE);
+DROP POLICY IF EXISTS companies_select_own ON companies;
+CREATE POLICY "companies_select_own" ON companies FOR SELECT USING (id = my_company_id() OR is_admin());
+DROP POLICY IF EXISTS companies_update_admin ON companies;
+CREATE POLICY "companies_update_admin" ON companies FOR UPDATE USING (is_admin());
 
 -- ── Users ─────────────────────────────────────────────────────
 -- INSERT policy allows any insert because the FOREIGN KEY
@@ -348,27 +347,40 @@ DO $$ BEGIN DROP POLICY IF EXISTS companies_update_admin ON companies; CREATE PO
 -- fake user records — you can't insert a user row without a
 -- matching auth user. This is critical during registration
 -- when email confirmation is required and auth.uid() is null.
-DO $$ BEGIN DROP POLICY IF EXISTS users_select_own ON users; CREATE POLICY "users_select_own" ON users FOR SELECT USING (id = auth.uid() OR is_admin()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
-DO $$ BEGIN DROP POLICY IF EXISTS users_insert_self ON users; CREATE POLICY "users_insert_self" ON users FOR INSERT WITH CHECK (TRUE); EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DROP POLICY IF EXISTS users_select_own ON users;
+CREATE POLICY "users_select_own" ON users FOR SELECT USING (id = auth.uid() OR is_admin());
+DROP POLICY IF EXISTS users_insert_self ON users;
+CREATE POLICY "users_insert_self" ON users FOR INSERT WITH CHECK (TRUE);
 
 -- ── Employment History ────────────────────────────────────────
-DO $$ BEGIN DROP POLICY IF EXISTS employment_select ON employment_history; CREATE POLICY "employment_select" ON employment_history FOR SELECT USING (EXISTS (SELECT 1 FROM companies WHERE id = my_company_id() AND is_verified = TRUE) OR is_admin()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
-DO $$ BEGIN DROP POLICY IF EXISTS employment_insert_own ON employment_history; CREATE POLICY "employment_insert_own" ON employment_history FOR INSERT WITH CHECK (company_id = my_company_id()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
-DO $$ BEGIN DROP POLICY IF EXISTS employment_update_own ON employment_history; CREATE POLICY "employment_update_own" ON employment_history FOR UPDATE USING (company_id = my_company_id() OR is_admin()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DROP POLICY IF EXISTS employment_select ON employment_history;
+CREATE POLICY "employment_select" ON employment_history FOR SELECT USING (EXISTS (SELECT 1 FROM companies WHERE id = my_company_id() AND is_verified = TRUE) OR is_admin());
+DROP POLICY IF EXISTS employment_insert_own ON employment_history;
+CREATE POLICY "employment_insert_own" ON employment_history FOR INSERT WITH CHECK (company_id = my_company_id());
+DROP POLICY IF EXISTS employment_update_own ON employment_history;
+CREATE POLICY "employment_update_own" ON employment_history FOR UPDATE USING (company_id = my_company_id() OR is_admin());
 
 -- ── Conduct Records ───────────────────────────────────────────
-DO $$ BEGIN DROP POLICY IF EXISTS conduct_select_verified ON conduct_records; CREATE POLICY "conduct_select_verified" ON conduct_records FOR SELECT USING (EXISTS (SELECT 1 FROM companies WHERE id = my_company_id() AND is_verified = TRUE) OR is_admin()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
-DO $$ BEGIN DROP POLICY IF EXISTS conduct_insert_own ON conduct_records; CREATE POLICY "conduct_insert_own" ON conduct_records FOR INSERT WITH CHECK (company_id = my_company_id()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DROP POLICY IF EXISTS conduct_select_verified ON conduct_records;
+CREATE POLICY "conduct_select_verified" ON conduct_records FOR SELECT USING (EXISTS (SELECT 1 FROM companies WHERE id = my_company_id() AND is_verified = TRUE) OR is_admin());
+DROP POLICY IF EXISTS conduct_insert_own ON conduct_records;
+CREATE POLICY "conduct_insert_own" ON conduct_records FOR INSERT WITH CHECK (company_id = my_company_id());
 
 -- ── Conduct Disputes ─────────────────────────────────────────────
-DO $$ BEGIN DROP POLICY IF EXISTS disputes_select_verified ON conduct_disputes; CREATE POLICY "disputes_select_verified" ON conduct_disputes FOR SELECT USING (EXISTS (SELECT 1 FROM companies WHERE id = my_company_id() AND is_verified = TRUE) OR is_admin()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
-DO $$ BEGIN DROP POLICY IF EXISTS disputes_insert_verified ON conduct_disputes; CREATE POLICY "disputes_insert_verified" ON conduct_disputes FOR INSERT WITH CHECK (disputed_by = my_company_id() AND EXISTS (SELECT 1 FROM companies WHERE id = my_company_id() AND is_verified = TRUE)); EXCEPTION WHEN undefined_table THEN NULL; END $$;
-DO $$ BEGIN DROP POLICY IF EXISTS disputes_update ON conduct_disputes; CREATE POLICY "disputes_update" ON conduct_disputes FOR UPDATE USING ((disputed_by = my_company_id() AND status = 'pending') OR is_admin()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
-DO $$ BEGIN DROP POLICY IF EXISTS disputes_delete_own_pending ON conduct_disputes; CREATE POLICY "disputes_delete_own_pending" ON conduct_disputes FOR DELETE USING (disputed_by = my_company_id() AND status = 'pending'); EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DROP POLICY IF EXISTS disputes_select_verified ON conduct_disputes;
+CREATE POLICY "disputes_select_verified" ON conduct_disputes FOR SELECT USING (EXISTS (SELECT 1 FROM companies WHERE id = my_company_id() AND is_verified = TRUE) OR is_admin());
+DROP POLICY IF EXISTS disputes_insert_verified ON conduct_disputes;
+CREATE POLICY "disputes_insert_verified" ON conduct_disputes FOR INSERT WITH CHECK (disputed_by = my_company_id() AND EXISTS (SELECT 1 FROM companies WHERE id = my_company_id() AND is_verified = TRUE));
+DROP POLICY IF EXISTS disputes_update ON conduct_disputes;
+CREATE POLICY "disputes_update" ON conduct_disputes FOR UPDATE USING ((disputed_by = my_company_id() AND status = 'pending') OR is_admin());
+DROP POLICY IF EXISTS disputes_delete_own_pending ON conduct_disputes;
+CREATE POLICY "disputes_delete_own_pending" ON conduct_disputes FOR DELETE USING (disputed_by = my_company_id() AND status = 'pending');
 
 -- ── Audit Logs ────────────────────────────────────────────────
-DO $$ BEGIN DROP POLICY IF EXISTS audit_select_own ON audit_logs; CREATE POLICY "audit_select_own" ON audit_logs FOR SELECT USING (company_id = my_company_id() OR is_admin()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
-DO $$ BEGIN DROP POLICY IF EXISTS audit_insert ON audit_logs; CREATE POLICY "audit_insert" ON audit_logs FOR INSERT WITH CHECK (company_id = my_company_id() OR (is_admin() AND company_id IS NULL)); EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DROP POLICY IF EXISTS audit_select_own ON audit_logs;
+CREATE POLICY "audit_select_own" ON audit_logs FOR SELECT USING (company_id = my_company_id() OR is_admin());
+DROP POLICY IF EXISTS audit_insert ON audit_logs;
+CREATE POLICY "audit_insert" ON audit_logs FOR INSERT WITH CHECK (company_id = my_company_id() OR (is_admin() AND company_id IS NULL));
 
 -- ── Audit log immutability ────────────────────────────────────
 REVOKE UPDATE, DELETE ON audit_logs FROM authenticated;
@@ -385,21 +397,30 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-DO $$ BEGIN DROP TRIGGER IF EXISTS trg_audit_logs_immutable ON audit_logs; CREATE TRIGGER trg_audit_logs_immutable BEFORE UPDATE OR DELETE ON audit_logs FOR EACH ROW EXECUTE FUNCTION prevent_audit_log_mutation(); EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DROP TRIGGER IF EXISTS trg_audit_logs_immutable ON audit_logs;
+CREATE TRIGGER trg_audit_logs_immutable BEFORE UPDATE OR DELETE ON audit_logs FOR EACH ROW EXECUTE FUNCTION prevent_audit_log_mutation();
 
 -- ── Alerts ────────────────────────────────────────────────────
-DO $$ BEGIN DROP POLICY IF EXISTS alerts_select_own ON alerts; CREATE POLICY "alerts_select_own" ON alerts FOR SELECT USING (company_id = my_company_id()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
-DO $$ BEGIN DROP POLICY IF EXISTS alerts_update_own ON alerts; CREATE POLICY "alerts_update_own" ON alerts FOR UPDATE USING (company_id = my_company_id()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
-DO $$ BEGIN DROP POLICY IF EXISTS alerts_insert ON alerts; CREATE POLICY "alerts_insert" ON alerts FOR INSERT WITH CHECK (TRUE); EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DROP POLICY IF EXISTS alerts_select_own ON alerts;
+CREATE POLICY "alerts_select_own" ON alerts FOR SELECT USING (company_id = my_company_id());
+DROP POLICY IF EXISTS alerts_update_own ON alerts;
+CREATE POLICY "alerts_update_own" ON alerts FOR UPDATE USING (company_id = my_company_id());
+DROP POLICY IF EXISTS alerts_insert ON alerts;
+CREATE POLICY "alerts_insert" ON alerts FOR INSERT WITH CHECK (TRUE);
 
 -- ── Device Tokens ─────────────────────────────────────────────
-DO $$ BEGIN DROP POLICY IF EXISTS device_tokens_insert_own ON device_tokens; CREATE POLICY "device_tokens_insert_own" ON device_tokens FOR INSERT WITH CHECK (user_id = auth.uid()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
-DO $$ BEGIN DROP POLICY IF EXISTS device_tokens_select_own ON device_tokens; CREATE POLICY "device_tokens_select_own" ON device_tokens FOR SELECT USING (user_id = auth.uid()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
-DO $$ BEGIN DROP POLICY IF EXISTS device_tokens_update_own ON device_tokens; CREATE POLICY "device_tokens_update_own" ON device_tokens FOR UPDATE USING (user_id = auth.uid()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
-DO $$ BEGIN DROP POLICY IF EXISTS device_tokens_delete_own ON device_tokens; CREATE POLICY "device_tokens_delete_own" ON device_tokens FOR DELETE USING (user_id = auth.uid()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DROP POLICY IF EXISTS device_tokens_insert_own ON device_tokens;
+CREATE POLICY "device_tokens_insert_own" ON device_tokens FOR INSERT WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS device_tokens_select_own ON device_tokens;
+CREATE POLICY "device_tokens_select_own" ON device_tokens FOR SELECT USING (user_id = auth.uid());
+DROP POLICY IF EXISTS device_tokens_update_own ON device_tokens;
+CREATE POLICY "device_tokens_update_own" ON device_tokens FOR UPDATE USING (user_id = auth.uid());
+DROP POLICY IF EXISTS device_tokens_delete_own ON device_tokens;
+CREATE POLICY "device_tokens_delete_own" ON device_tokens FOR DELETE USING (user_id = auth.uid());
 
 -- ── Search Rate Limits ───────────────────────────────────────
-DO $$ BEGIN DROP POLICY IF EXISTS search_rate_limits_select_own ON search_rate_limits; CREATE POLICY "search_rate_limits_select_own" ON search_rate_limits FOR SELECT USING (user_id = auth.uid()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DROP POLICY IF EXISTS search_rate_limits_select_own ON search_rate_limits;
+CREATE POLICY "search_rate_limits_select_own" ON search_rate_limits FOR SELECT USING (user_id = auth.uid());
 
 -- ============================================================
 --  SEED DATA (optional — skip with ON CONFLICT DO NOTHING)
