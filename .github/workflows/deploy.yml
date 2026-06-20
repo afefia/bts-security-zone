@@ -17,6 +17,9 @@ jobs:
 
       - run: flutter build web --release
 
+      - name: Copy vercel.json into build output
+        run: cp vercel.json build/web/vercel.json
+
       - name: Deploy to Vercel
         run: npx vercel@latest deploy build/web --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
