@@ -269,14 +269,9 @@ class AuthService {
         return 'This email is already registered';
       }
     }
-    // RLS policy violation — extract the table name for a clear message.
+    // RLS policy violation — show the raw error for debugging.
     if (e.message.contains('violates row-level security policy')) {
-      final tableName = e.message.replaceAllMapped(
-        RegExp(r'for table "?(\w+)"?'),
-        (m) => m[1] ?? 'unknown',
-      );
-      return 'Permission denied on $tableName. Please ask admin to create the '
-          'correct RLS policy, or re-run supabase_schema.sql.';
+      return 'RLS error. Raw: ${e.message}';
     }
     return 'Database error: ${e.message}';
   }
