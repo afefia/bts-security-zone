@@ -272,6 +272,11 @@ class AuthService {
         return 'This email is already registered';
       }
     }
+    // RLS policy violation — the SQL schema hasn't been applied yet.
+    if (e.message.contains('violates row-level security policy')) {
+      return 'Database setup incomplete. Please run supabase_cleanup.sql '
+          'then supabase_schema.sql in your Supabase SQL Editor.';
+    }
     return 'Database error: ${e.message}';
   }
 }
