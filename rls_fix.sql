@@ -1,9 +1,22 @@
 -- ============================================================
---  RLS POLICY FIX — run this standalone in Supabase SQL Editor
---  This ONLY creates/replaces policies. Safe to re-run.
+--  THE SECURITY ZONE — COMPLETE FIX
+--  Run this in Supabase SQL Editor (Dashboard → SQL Editor)
+--  Paste entire file, click RUN. Safe to re-run.
 -- ============================================================
 
--- 1. Helper functions (needed by policies below)
+-- 0. Grant table-level permissions to anon role
+--    RLS policies can only restrict access that was already granted.
+--    Without these explicit GRANTs, RLS has nothing to enforce.
+GRANT USAGE    ON SCHEMA public TO anon;
+GRANT SELECT   ON ALL TABLES IN SCHEMA public TO anon;
+GRANT INSERT   ON ALL TABLES IN SCHEMA public TO anon;
+GRANT UPDATE   ON ALL TABLES IN SCHEMA public TO anon;
+GRANT DELETE   ON ALL TABLES IN SCHEMA public TO anon;
+-- Ensure future tables also get these grants
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO authenticated;
+
+-- 1. Helper functions
 CREATE OR REPLACE FUNCTION my_company_id()
 RETURNS UUID AS $$
   SELECT company_id FROM users WHERE id = auth.uid();
@@ -14,7 +27,7 @@ RETURNS BOOLEAN AS $$
   SELECT role = 'admin' FROM users WHERE id = auth.uid();
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
--- 2. Ensure RLS is enabled (safe to re-run)
+-- 2. Ensure RLS is enabled
 ALTER TABLE IF EXISTS companies        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS users            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS recruits         ENABLE ROW LEVEL SECURITY;
@@ -26,7 +39,7 @@ ALTER TABLE IF EXISTS alerts           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS device_tokens    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS search_rate_limits ENABLE ROW LEVEL SECURITY;
 
--- 3. Drop + recreate all policies (idempotent)
+-- 3. Drop + recreate all policies
 -- ── Companies ──
 DROP POLICY IF EXISTS companies_insert_public ON companies;
 CREATE POLICY "companies_insert_public" ON companies FOR INSERT WITH CHECK (TRUE);
@@ -94,7 +107,7 @@ DROP POLICY IF EXISTS search_rate_limits_select_own ON search_rate_limits;
 CREATE POLICY "search_rate_limits_select_own" ON search_rate_limits FOR SELECT USING (user_id = auth.uid());
 
 -- ============================================================
---  REGISTRATION STORED PROCEDURE (bypasses RLS via SECURITY DEFINER)
+--  4. REGISTRATION STORED PROCEDURE (backup — bypasses RLS)
 -- ============================================================
 CREATE OR REPLACE FUNCTION register_company(
   p_company_name    TEXT,

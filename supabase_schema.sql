@@ -343,6 +343,17 @@ $$ LANGUAGE plpgsql;
 DO $$ BEGIN DROP TRIGGER IF EXISTS trg_notify_push_on_alert ON alerts; CREATE TRIGGER trg_notify_push_on_alert AFTER INSERT ON alerts FOR EACH ROW EXECUTE FUNCTION notify_push_on_alert(); EXCEPTION WHEN undefined_table THEN NULL; END $$;
 
 -- ============================================================
+--  ROLE PERMISSIONS (needed for RLS to function)
+-- ============================================================
+GRANT USAGE    ON SCHEMA public TO anon;
+GRANT SELECT   ON ALL TABLES IN SCHEMA public TO anon;
+GRANT INSERT   ON ALL TABLES IN SCHEMA public TO anon;
+GRANT UPDATE   ON ALL TABLES IN SCHEMA public TO anon;
+GRANT DELETE   ON ALL TABLES IN SCHEMA public TO anon;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO authenticated;
+
+-- ============================================================
 --  ROW LEVEL SECURITY (RLS)
 -- ============================================================
 ALTER TABLE IF EXISTS companies        ENABLE ROW LEVEL SECURITY;
