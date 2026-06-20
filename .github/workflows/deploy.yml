@@ -13,6 +13,11 @@ jobs:
         with:
           channel: stable
 
+      # Create .env from GitHub Secrets so the build asset resolves
+      - run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+
       - run: flutter build web --release
 
       - uses: amondnet/vercel-action@v25
