@@ -234,6 +234,40 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ============================================================
+--  REGISTRATION STORED PROCEDURE (bypasses RLS via SECURITY DEFINER)
+-- ============================================================
+CREATE OR REPLACE FUNCTION register_company(
+  p_company_name    TEXT,
+  p_license_number  TEXT,
+  p_region          TEXT,
+  p_address         TEXT,
+  p_email           TEXT,
+  p_phone           TEXT,
+  p_user_id         UUID,
+  p_full_name       TEXT
+)
+RETURNS UUID
+SECURITY DEFINER  -- runs as owner, bypasses RLS
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_company_id UUID;
+BEGIN
+  -- Insert the company
+  INSERT INTO companies (name, license_number, region, address, email, phone, is_verified)
+  VALUES (p_company_name, p_license_number, p_region, p_address, p_email, p_phone, FALSE)
+  RETURNING id INTO v_company_id;
+
+  -- Insert the user record
+  INSERT INTO users (id, company_id, full_name, email, role)
+  VALUES (p_user_id, v_company_id, p_full_name, p_email, 'company_user');
+
+  RETURN v_company_id;
+END;
+$$;
+
+-- ============================================================
 --  AUTO-UPDATE updated_at TRIGGER
 -- ============================================================
 CREATE OR REPLACE FUNCTION update_updated_at()

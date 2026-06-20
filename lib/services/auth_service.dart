@@ -105,30 +105,16 @@ class AuthService {
       // since Supabase only allows this insert as that authenticated user.
       final needsConfirmation = response.session == null;
 
-      // 2. Insert company (unverified)
-      final companyRes = await _client
-          .from('companies')
-          .insert({
-            'name': companyName,
-            'license_number': licenseNumber,
-            'region': region,
-            'address': address,
-            'email': email.trim(),
-            'phone': phone,
-            'is_verified': false,
-          })
-          .select('id')
-          .single();
-
-      final companyId = companyRes['id'] as String;
-
-      // 3. Insert user record
-      await _client.from('users').insert({
-        'id': userId,
-        'company_id': companyId,
-        'full_name': fullName,
-        'email': email.trim(),
-        'role': 'company_user',
+      // 2. Insert company + user via stored procedure (bypasses RLS)
+      final companyId = await _client.rpc('register_company', params: {
+        'p_company_name': companyName,
+        'p_license_number': licenseNumber,
+        'p_region': region,
+        'p_address': address,
+        'p_email': email.trim(),
+        'p_phone': phone,
+        'p_user_id': userId,
+        'p_full_name': fullName,
       });
 
       // If confirmation is required, sign out any partial session so the
@@ -269,9 +255,10 @@ class AuthService {
         return 'This email is already registered';
       }
     }
-    // RLS policy violation — show the raw error for debugging.
+    // RLS policy violation (shouldn't happen with stored procedure).
     if (e.message.contains('violates row-level security policy')) {
-      return 'RLS error. Raw: ${e.message}';
+      return 'Permission denied. Please run the latest supabase_schema.sql in '
+          'the Supabase SQL Editor to set up the registration function.';
     }
     return 'Database error: ${e.message}';
   }
