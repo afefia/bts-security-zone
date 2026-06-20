@@ -188,7 +188,6 @@ class AuthService {
     }
   }
 
-
   /// Updates the logged-in user's full name and/or email. Email changes
   /// trigger Supabase's own re-confirmation flow (a confirmation link
   /// goes to the new address) — the change doesn't take effect until
@@ -212,8 +211,7 @@ class AuthService {
       if (fullName != null && fullName.trim().isNotEmpty) {
         await _client
             .from('users')
-            .update({'full_name': fullName.trim()})
-            .eq('id', user.id);
+            .update({'full_name': fullName.trim()}).eq('id', user.id);
       }
 
       await _logAudit(action: 'UPDATE', detail: 'Updated profile details');
@@ -223,8 +221,7 @@ class AuthService {
       return AuthResult(success: false, error: _friendlyError(e.message));
     } catch (e) {
       return AuthResult(
-          success: false,
-          error: 'Could not update profile: ${e.toString()}');
+          success: false, error: 'Could not update profile: ${e.toString()}');
     }
   }
 
@@ -272,10 +269,14 @@ class AuthService {
         return 'This email is already registered';
       }
     }
-    // RLS policy violation — the SQL schema hasn't been applied yet.
+    // RLS policy violation — extract the table name for a clear message.
     if (e.message.contains('violates row-level security policy')) {
-      return 'Database setup incomplete. Please run supabase_cleanup.sql '
-          'then supabase_schema.sql in your Supabase SQL Editor.';
+      final tableName = e.message.replaceAllMapped(
+        RegExp(r'for table "?(\w+)"?'),
+        (m) => m[1] ?? 'unknown',
+      );
+      return 'Permission denied on $tableName. Please ask admin to create the '
+          'correct RLS policy, or re-run supabase_schema.sql.';
     }
     return 'Database error: ${e.message}';
   }

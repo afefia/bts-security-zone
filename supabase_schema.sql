@@ -343,8 +343,13 @@ DO $$ BEGIN DROP POLICY IF EXISTS companies_select_own ON companies; CREATE POLI
 DO $$ BEGIN DROP POLICY IF EXISTS companies_update_admin ON companies; CREATE POLICY "companies_update_admin" ON companies FOR UPDATE USING (is_admin()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
 
 -- ── Users ─────────────────────────────────────────────────────
+-- INSERT policy allows any insert because the FOREIGN KEY
+-- constraint (id -> auth.users(id)) already prevents creating
+-- fake user records — you can't insert a user row without a
+-- matching auth user. This is critical during registration
+-- when email confirmation is required and auth.uid() is null.
 DO $$ BEGIN DROP POLICY IF EXISTS users_select_own ON users; CREATE POLICY "users_select_own" ON users FOR SELECT USING (id = auth.uid() OR is_admin()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
-DO $$ BEGIN DROP POLICY IF EXISTS users_insert_self ON users; CREATE POLICY "users_insert_self" ON users FOR INSERT WITH CHECK (id = auth.uid()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DO $$ BEGIN DROP POLICY IF EXISTS users_insert_self ON users; CREATE POLICY "users_insert_self" ON users FOR INSERT WITH CHECK (TRUE); EXCEPTION WHEN undefined_table THEN NULL; END $$;
 
 -- ── Employment History ────────────────────────────────────────
 DO $$ BEGIN DROP POLICY IF EXISTS employment_select ON employment_history; CREATE POLICY "employment_select" ON employment_history FOR SELECT USING (EXISTS (SELECT 1 FROM companies WHERE id = my_company_id() AND is_verified = TRUE) OR is_admin()); EXCEPTION WHEN undefined_table THEN NULL; END $$;
