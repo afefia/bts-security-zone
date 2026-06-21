@@ -160,28 +160,6 @@ class AdminService {
         .toList()
       ..sort((a, b) => a.date.compareTo(b.date));
   }
-
-  /// Admin: get all companies (bypasses RLS via stored procedure).
-  Future<List<DbCompany>> getAllCompanies() async {
-    final data = await _client.rpc('admin_get_all_companies');
-    return (data as List)
-        .map((e) => DbCompany.fromJson(e as Map<String, dynamic>))
-        .toList();
-  }
-
-  /// Admin: verify a company (bypasses RLS).
-  Future<void> verifyCompany(String companyId) async {
-    await _client.rpc('admin_verify_company', params: {
-      'p_company_id': companyId,
-    });
-  }
-
-  /// Admin: reject/delete a company (bypasses RLS).
-  Future<void> rejectCompany(String companyId) async {
-    await _client.rpc('admin_reject_company', params: {
-      'p_company_id': companyId,
-    });
-  }
 }
 
 class DailyCount {

@@ -113,7 +113,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final flagged = _recruits.where((r) => r.status != 'clear').length;
+    final flagged =
+        _recruits.where((r) => r.status != 'clear').length;
 
     return Scaffold(
       backgroundColor: AppTheme.navyDark,
@@ -226,147 +227,140 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 label: 'Recruits',
                                 value: '${_recruits.length}',
                                 icon: Icons.people,
-                                color: AppTheme.successGreen,
-                              ),
-                              const SizedBox(width: 12),
-                              _StatCard(
-                                label: 'Companies',
-                                value: '$_companyCount',
-                                icon: Icons.business,
-                                color: AppTheme.steelBlue,
-                              ),
-                              const SizedBox(width: 12),
-                              _StatCard(
-                                label: 'Flagged',
-                                value: '$flagged',
-                                icon: Icons.flag,
-                                color: AppTheme.dangerRed,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
+                              color: AppTheme.successGreen,
+                            ),
+                            const SizedBox(width: 12),
+                            _StatCard(
+                              label: 'Companies',
+                              value: '$_companyCount',
+                              icon: Icons.business,
+                              color: AppTheme.steelBlue,
+                            ),
+                            const SizedBox(width: 12),
+                            _StatCard(
+                              label: 'Flagged',
+                              value: '$flagged',
+                              icon: Icons.flag,
+                              color: AppTheme.dangerRed,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
 
-                          // Quick actions
-                          Text(
-                            'QUICK ACTIONS',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                  letterSpacing: 2,
-                                  color: AppTheme.goldAccent,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                          ),
-                          const SizedBox(height: 12),
-                          GridView.count(
-                            crossAxisCount: 2,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 1.4,
-                            children: [
-                              _ActionCard(
-                                icon: Icons.search,
-                                label: 'Search Recruit',
-                                subtitle: 'By ID or fingerprint',
-                                onTap: () => Navigator.push(
+                        // Quick actions
+                        Text(
+                          'QUICK ACTIONS',
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                letterSpacing: 2,
+                                color: AppTheme.goldAccent,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                        const SizedBox(height: 12),
+                        GridView.count(
+                          crossAxisCount: 2,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 1.4,
+                          children: [
+                            _ActionCard(
+                              icon: Icons.search,
+                              label: 'Search Recruit',
+                              subtitle: 'By ID or fingerprint',
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const SearchScreen()),
+                              ),
+                            ),
+                            _ActionCard(
+                              icon: Icons.person_add,
+                              label: 'Register Recruit',
+                              subtitle: 'Add new personnel',
+                              onTap: () async {
+                                await Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (_) => const SearchScreen()),
-                                ),
-                              ),
-                              _ActionCard(
-                                icon: Icons.person_add,
-                                label: 'Register Recruit',
-                                subtitle: 'Add new personnel',
-                                onTap: () async {
-                                  await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          const RegisterRecruitScreen(),
-                                    ),
-                                  );
-                                  _loadData();
-                                },
-                              ),
-                              _ActionCard(
-                                icon: Icons.business_center,
-                                label: 'Companies',
-                                subtitle: 'Manage & verify',
-                                onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) =>
-                                          const CompanyListScreen()),
-                                ),
-                              ),
-                              if (_myProfile?.isAdmin == true)
-                                _ActionCard(
-                                  icon: Icons.admin_panel_settings,
-                                  label: 'Admin Panel',
-                                  subtitle: 'Reports & oversight',
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) =>
-                                            const AdminPanelScreen()),
+                                    builder: (_) =>
+                                        const RegisterRecruitScreen(),
                                   ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
+                                );
+                                _loadData();
+                              },
+                            ),
+                            _ActionCard(
+                              icon: Icons.business_center,
+                              label: 'Companies',
+                              subtitle: 'Manage & verify',
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const CompanyListScreen()),
+                              ),
+                            ),
+                            _ActionCard(
+                              icon: Icons.admin_panel_settings,
+                              label: 'Admin Panel',
+                              subtitle: 'Reports & oversight',
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const AdminPanelScreen()),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
 
-                          // Recent flags
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'RECENT FLAGS',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      letterSpacing: 2,
-                                      color: AppTheme.goldAccent,
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                        // Recent flags
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'RECENT FLAGS',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    letterSpacing: 2,
+                                    color: AppTheme.goldAccent,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                            AppButton.text(
+                              label: 'View All',
+                              compact: true,
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const SearchScreen()),
                               ),
-                              AppButton.text(
-                                label: 'View All',
-                                compact: true,
-                                onPressed: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => const SearchScreen()),
-                                ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        if (_recruits.where((r) => r.status != 'clear').isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            child: Center(
+                              child: Text(
+                                'No flagged recruits — all clear ✅',
+                                style: Theme.of(context).textTheme.bodyMedium,
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          if (_recruits
+                            ),
+                          )
+                        else
+                          ..._recruits
                               .where((r) => r.status != 'clear')
-                              .isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 20),
-                              child: Center(
-                                child: Text(
-                                  'No flagged recruits — all clear ✅',
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ),
-                            )
-                          else
-                            ..._recruits
-                                .where((r) => r.status != 'clear')
-                                .map((r) => _RecruitListTile(
-                                      recruit: r,
-                                      onReturn: _loadData,
-                                    )),
-                        ],
-                      ),
+                              .map((r) => _RecruitListTile(
+                                    recruit: r,
+                                    onReturn: _loadData,
+                                  )),
+                      ],
+                    ),
                     ),
                   ),
                 ),
@@ -466,11 +460,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       style: Theme.of(
                         context,
                       ).textTheme.bodyMedium?.copyWith(
-                            color: isVerified
-                                ? AppTheme.successGreen
-                                : AppTheme.goldAccent,
-                            fontSize: 12,
-                          ),
+                        color: isVerified
+                            ? AppTheme.successGreen
+                            : AppTheme.goldAccent,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -679,8 +673,7 @@ class _AppDrawer extends StatelessWidget {
                   const CircleAvatar(
                     radius: 30,
                     backgroundColor: AppTheme.goldAccent,
-                    child:
-                        Icon(Icons.shield, color: AppTheme.navyDark, size: 30),
+                    child: Icon(Icons.shield, color: AppTheme.navyDark, size: 30),
                   ),
                   const SizedBox(height: 12),
                   Text(companyName ?? 'Loading...',
@@ -739,6 +732,7 @@ class _AppDrawer extends StatelessWidget {
               },
             ),
 
+
             // Only admins see the Admin Panel link
             if (isAdmin)
               _DrawerItem(
@@ -746,10 +740,8 @@ class _AppDrawer extends StatelessWidget {
                 label: 'Admin Panel',
                 onTap: () {
                   Navigator.pop(context);
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const AdminPanelScreen()));
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const AdminPanelScreen()));
                 },
               ),
 
@@ -830,14 +822,14 @@ class _SyncStatusDrawerItemState extends State<_SyncStatusDrawerItem> {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(
-        _pendingCount > 0
-            ? Icons.cloud_upload_outlined
-            : Icons.cloud_done_outlined,
+        _pendingCount > 0 ? Icons.cloud_upload_outlined : Icons.cloud_done_outlined,
         color: _pendingCount > 0 ? AppTheme.goldAccent : AppTheme.successGreen,
         size: 22,
       ),
       title: Text(
-        _pendingCount > 0 ? '$_pendingCount pending sync' : 'All synced',
+        _pendingCount > 0
+            ? '$_pendingCount pending sync'
+            : 'All synced',
         style: Theme.of(context)
             .textTheme
             .titleMedium

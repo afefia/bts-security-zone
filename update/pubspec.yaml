@@ -1,0 +1,52 @@
+name: security_zone
+description: The Security Zone - Private Security Personnel Monitoring Platform
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+
+  # Supabase
+  supabase_flutter: ^2.3.4
+
+  # Utils
+  intl: ^0.19.0
+  flutter_dotenv: ^5.1.0
+  crypto: ^3.0.3
+
+  # Offline support
+  sqflite: ^2.3.3
+  path: ^1.9.0
+  connectivity_plus: ^6.0.3
+
+  # PDF export
+  pdf: ^3.11.1
+  printing: ^5.13.2
+
+
+
+  # Fingerprint hardware integration: each vendor SDK below is a Flutter
+  # plugin that talks to a USB/Bluetooth fingerprint scanner and returns a
+  # raw template — add ONE depending on which scanner hardware you buy.
+  # lib/services/fingerprint_service.dart has a complete, ready-to-uncomment
+  # MantraFingerprintProvider implementation (capture + real 1:N matching,
+  # not just a sketch) — wiring in hardware is "uncomment that class + add
+  # one line here", not a from-scratch integration.
+  # mantra_mfs100: ^1.0.0       # Mantra MFS100 (popular, affordable, India/Africa-friendly)
+  # secugen_flutter: ^1.0.0     # SecuGen Hamster series
+  # digitalpersona_sdk: ^1.0.0  # DigitalPersona U.are.U readers
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env

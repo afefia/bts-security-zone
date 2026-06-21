@@ -105,16 +105,30 @@ class AuthService {
       // since Supabase only allows this insert as that authenticated user.
       final needsConfirmation = response.session == null;
 
-      // 2. Insert company + user via stored procedure (bypasses RLS)
-      final companyId = await _client.rpc('register_company', params: {
-        'p_company_name': companyName,
-        'p_license_number': licenseNumber,
-        'p_region': region,
-        'p_address': address,
-        'p_email': email.trim(),
-        'p_phone': phone,
-        'p_user_id': userId,
-        'p_full_name': fullName,
+      // 2. Insert company (unverified)
+      final companyRes = await _client
+          .from('companies')
+          .insert({
+            'name': companyName,
+            'license_number': licenseNumber,
+            'region': region,
+            'address': address,
+            'email': email.trim(),
+            'phone': phone,
+            'is_verified': false,
+          })
+          .select('id')
+          .single();
+
+      final companyId = companyRes['id'] as String;
+
+      // 3. Insert user record
+      await _client.from('users').insert({
+        'id': userId,
+        'company_id': companyId,
+        'full_name': fullName,
+        'email': email.trim(),
+        'role': 'company_user',
       });
 
       // If confirmation is required, sign out any partial session so the
@@ -174,6 +188,7 @@ class AuthService {
     }
   }
 
+
   /// Updates the logged-in user's full name and/or email. Email changes
   /// trigger Supabase's own re-confirmation flow (a confirmation link
   /// goes to the new address) — the change doesn't take effect until
@@ -197,7 +212,8 @@ class AuthService {
       if (fullName != null && fullName.trim().isNotEmpty) {
         await _client
             .from('users')
-            .update({'full_name': fullName.trim()}).eq('id', user.id);
+            .update({'full_name': fullName.trim()})
+            .eq('id', user.id);
       }
 
       await _logAudit(action: 'UPDATE', detail: 'Updated profile details');
@@ -207,7 +223,8 @@ class AuthService {
       return AuthResult(success: false, error: _friendlyError(e.message));
     } catch (e) {
       return AuthResult(
-          success: false, error: 'Could not update profile: ${e.toString()}');
+          success: false,
+          error: 'Could not update profile: ${e.toString()}');
     }
   }
 
