@@ -39,7 +39,7 @@ DO $$ BEGIN CREATE TYPE audit_action   AS ENUM ('SEARCH', 'REGISTER', 'ADD_RECOR
 -- ============================================================
 --  COMPANIES
 -- ============================================================
-CREATE TABLE companies (
+CREATE TABLE IF NOT EXISTS companies (
   id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name            TEXT NOT NULL CHECK (char_length(trim(name)) BETWEEN 2 AND 150),
   license_number  TEXT NOT NULL UNIQUE CHECK (char_length(license_number) BETWEEN 1 AND 40),
@@ -57,7 +57,7 @@ CREATE TABLE companies (
 -- ============================================================
 --  USERS  (one or more users per company)
 -- ============================================================
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id            UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   company_id    UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   full_name     TEXT NOT NULL CHECK (char_length(trim(full_name)) BETWEEN 2 AND 120),
@@ -69,7 +69,7 @@ CREATE TABLE users (
 -- ============================================================
 --  RECRUITS
 -- ============================================================
-CREATE TABLE recruits (
+CREATE TABLE IF NOT EXISTS recruits (
   id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   full_name         TEXT NOT NULL CHECK (char_length(trim(full_name)) BETWEEN 2 AND 120),
   id_number         TEXT NOT NULL UNIQUE CHECK (char_length(id_number) BETWEEN 1 AND 40),       -- National ID
@@ -84,14 +84,14 @@ CREATE TABLE recruits (
 );
 
 -- Index for fast lookup
-CREATE INDEX idx_recruits_id_number        ON recruits(id_number);
-CREATE INDEX idx_recruits_fingerprint_hash ON recruits(fingerprint_hash);
-CREATE INDEX idx_recruits_status           ON recruits(status);
+CREATE INDEX IF NOT EXISTS idx_recruits_id_number        ON recruits(id_number);
+CREATE INDEX IF NOT EXISTS idx_recruits_fingerprint_hash ON recruits(fingerprint_hash);
+CREATE INDEX IF NOT EXISTS idx_recruits_status           ON recruits(status);
 
 -- ============================================================
 --  EMPLOYMENT HISTORY
 -- ============================================================
-CREATE TABLE employment_history (
+CREATE TABLE IF NOT EXISTS employment_history (
   id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   recruit_id    UUID NOT NULL REFERENCES recruits(id) ON DELETE CASCADE,
   company_id    UUID NOT NULL REFERENCES companies(id),
@@ -103,13 +103,13 @@ CREATE TABLE employment_history (
   CONSTRAINT chk_employment_dates CHECK (end_date IS NULL OR end_date >= start_date)
 );
 
-CREATE INDEX idx_employment_recruit ON employment_history(recruit_id);
-CREATE INDEX idx_employment_company ON employment_history(company_id);
+CREATE INDEX IF NOT EXISTS idx_employment_recruit ON employment_history(recruit_id);
+CREATE INDEX IF NOT EXISTS idx_employment_company ON employment_history(company_id);
 
 -- ============================================================
 --  CONDUCT RECORDS
 -- ============================================================
-CREATE TABLE conduct_records (
+CREATE TABLE IF NOT EXISTS conduct_records (
   id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   recruit_id    UUID NOT NULL REFERENCES recruits(id) ON DELETE CASCADE,
   company_id    UUID NOT NULL REFERENCES companies(id),
@@ -121,9 +121,9 @@ CREATE TABLE conduct_records (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_conduct_recruit ON conduct_records(recruit_id);
-CREATE INDEX idx_conduct_company ON conduct_records(company_id);
-CREATE INDEX idx_conduct_type    ON conduct_records(type);
+CREATE INDEX IF NOT EXISTS idx_conduct_recruit ON conduct_records(recruit_id);
+CREATE INDEX IF NOT EXISTS idx_conduct_company ON conduct_records(company_id);
+CREATE INDEX IF NOT EXISTS idx_conduct_type    ON conduct_records(type);
 
 -- ============================================================
 --  CONDUCT RECORD DISPUTES
@@ -140,7 +140,7 @@ CREATE INDEX idx_conduct_type    ON conduct_records(type);
 -- ============================================================
 DO $$ BEGIN CREATE TYPE dispute_status AS ENUM ('pending', 'upheld', 'rejected'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TABLE conduct_disputes (
+CREATE TABLE IF NOT EXISTS conduct_disputes (
   id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   conduct_record_id UUID NOT NULL REFERENCES conduct_records(id) ON DELETE CASCADE,
   disputed_by       UUID NOT NULL REFERENCES companies(id),
@@ -156,14 +156,14 @@ CREATE TABLE conduct_disputes (
   UNIQUE (conduct_record_id, disputed_by)
 );
 
-CREATE INDEX idx_disputes_record ON conduct_disputes(conduct_record_id);
-CREATE INDEX idx_disputes_status ON conduct_disputes(status);
-CREATE INDEX idx_disputes_company ON conduct_disputes(disputed_by);
+CREATE INDEX IF NOT EXISTS idx_disputes_record ON conduct_disputes(conduct_record_id);
+CREATE INDEX IF NOT EXISTS idx_disputes_status ON conduct_disputes(status);
+CREATE INDEX IF NOT EXISTS idx_disputes_company ON conduct_disputes(disputed_by);
 
 -- ============================================================
 --  AUDIT LOGS
 -- ============================================================
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
   id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   company_id    UUID REFERENCES companies(id),
   user_id       UUID REFERENCES users(id),
@@ -174,13 +174,13 @@ CREATE TABLE audit_logs (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_audit_company    ON audit_logs(company_id);
-CREATE INDEX idx_audit_created_at ON audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_company    ON audit_logs(company_id);
+CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_logs(created_at DESC);
 
 -- ============================================================
 --  ALERTS
 -- ============================================================
-CREATE TABLE alerts (
+CREATE TABLE IF NOT EXISTS alerts (
   id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   company_id    UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   title         TEXT NOT NULL,
@@ -191,8 +191,8 @@ CREATE TABLE alerts (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_alerts_company ON alerts(company_id);
-CREATE INDEX idx_alerts_unread  ON alerts(company_id, is_read) WHERE is_read = FALSE;
+CREATE INDEX IF NOT EXISTS idx_alerts_company ON alerts(company_id);
+CREATE INDEX IF NOT EXISTS idx_alerts_unread  ON alerts(company_id, is_read) WHERE is_read = FALSE;
 
 -- ============================================================
 --  DEVICE TOKENS — for push notification delivery (FCM)
@@ -203,7 +203,7 @@ CREATE INDEX idx_alerts_unread  ON alerts(company_id, is_read) WHERE is_read = F
 --  multiple tokens (multiple devices, or a reinstalled app), so this is
 --  keyed by token rather than by user.
 -- ============================================================
-CREATE TABLE device_tokens (
+CREATE TABLE IF NOT EXISTS device_tokens (
   token         TEXT PRIMARY KEY,
   user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   company_id    UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
@@ -212,7 +212,7 @@ CREATE TABLE device_tokens (
   last_seen_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_device_tokens_company ON device_tokens(company_id);
+CREATE INDEX IF NOT EXISTS idx_device_tokens_company ON device_tokens(company_id);
 
 -- ============================================================
 --  SEARCH RATE LIMITING
@@ -246,7 +246,7 @@ CREATE INDEX idx_device_tokens_company ON device_tokens(company_id);
 --  holds one row per user per minute-bucket and old buckets are cheap to
 --  prune (see cleanup note below).
 -- ============================================================
-CREATE TABLE search_rate_limits (
+CREATE TABLE IF NOT EXISTS search_rate_limits (
   user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   minute_bucket TIMESTAMPTZ NOT NULL, -- truncated to the minute
   search_count  INTEGER NOT NULL DEFAULT 0,
@@ -663,3 +663,5 @@ VALUES
   ('11111111-1111-1111-1111-111111111111', 'Alpha Shield Security',  'PSC-GH-1042', 'Greater Accra', 'info@alphashield.gh',   '+233201234567', TRUE, NOW()),
   ('22222222-2222-2222-2222-222222222222', 'Eagle Eye Protection',   'PSC-GH-2211', 'Ashanti',       'admin@eagleeye.gh',    '+233207654321', TRUE, NOW()),
   ('33333333-3333-3333-3333-333333333333', 'Guardian Force Ltd',     'PSC-GH-3390', 'Western',       'ops@guardianforce.gh', '+233209876543', FALSE, NULL);
+
+
