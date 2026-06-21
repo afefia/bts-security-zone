@@ -511,33 +511,42 @@ $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
 -- ── Companies ─────────────────────────────────────────────────
 -- Anyone can register (insert). Only see own company or admin sees all.
+DROP POLICY IF EXISTS "companies_insert_public" ON companies;
 CREATE POLICY "companies_insert_public" ON companies FOR INSERT WITH CHECK (TRUE);
+DROP POLICY IF EXISTS "companies_select_own" ON companies;
 CREATE POLICY "companies_select_own"    ON companies FOR SELECT USING (id = my_company_id() OR is_admin());
+DROP POLICY IF EXISTS "companies_update_admin" ON companies;
 CREATE POLICY "companies_update_admin"  ON companies FOR UPDATE USING (is_admin());
 
 -- ── Users ─────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "users_select_own" ON users;
 CREATE POLICY "users_select_own"  ON users FOR SELECT USING (id = auth.uid() OR is_admin());
+DROP POLICY IF EXISTS "users_insert_self" ON users;
 CREATE POLICY "users_insert_self" ON users FOR INSERT WITH CHECK (id = auth.uid());
 
 
 -- ── Employment History ────────────────────────────────────────
+DROP POLICY IF EXISTS "employment_select" ON employment_history;
 CREATE POLICY "employment_select" ON employment_history
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM companies WHERE id = my_company_id() AND is_verified = TRUE)
     OR is_admin()
   );
 
+DROP POLICY IF EXISTS "employment_insert_own" ON employment_history;
 CREATE POLICY "employment_insert_own" ON employment_history
   FOR INSERT WITH CHECK (company_id = my_company_id());
 
 -- A company can only close out (set end_date/exit_reason on) employment
 -- records that belong to them — not another company's record of the same
 -- recruit. Admins can fix any record.
+DROP POLICY IF EXISTS "employment_update_own" ON employment_history;
 CREATE POLICY "employment_update_own" ON employment_history
   FOR UPDATE USING (company_id = my_company_id() OR is_admin());
 
 -- ── Conduct Records ───────────────────────────────────────────
 -- All verified companies can READ all conduct records (cross-company transparency)
+DROP POLICY IF EXISTS "conduct_select_verified" ON conduct_records;
 CREATE POLICY "conduct_select_verified" ON conduct_records
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM companies WHERE id = my_company_id() AND is_verified = TRUE)
@@ -545,6 +554,7 @@ CREATE POLICY "conduct_select_verified" ON conduct_records
   );
 
 -- Only the company that owns the record can INSERT it
+DROP POLICY IF EXISTS "conduct_insert_own" ON conduct_records;
 CREATE POLICY "conduct_insert_own" ON conduct_records
   FOR INSERT WITH CHECK (company_id = my_company_id());
 
@@ -553,12 +563,14 @@ CREATE POLICY "conduct_insert_own" ON conduct_records
 -- see if a record against a candidate is contested), can file their
 -- own dispute, and can update/delete only their own pending dispute.
 -- Admins can do everything including resolve disputes.
+DROP POLICY IF EXISTS "disputes_select_verified" ON conduct_disputes;
 CREATE POLICY "disputes_select_verified" ON conduct_disputes
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM companies WHERE id = my_company_id() AND is_verified = TRUE)
     OR is_admin()
   );
 
+DROP POLICY IF EXISTS "disputes_insert_verified" ON conduct_disputes;
 CREATE POLICY "disputes_insert_verified" ON conduct_disputes
   FOR INSERT WITH CHECK (
     disputed_by = my_company_id()
@@ -566,23 +578,27 @@ CREATE POLICY "disputes_insert_verified" ON conduct_disputes
   );
 
 -- Companies can withdraw their own pending dispute; admins resolve all
+DROP POLICY IF EXISTS "disputes_update" ON conduct_disputes;
 CREATE POLICY "disputes_update" ON conduct_disputes
   FOR UPDATE USING (
     (disputed_by = my_company_id() AND status = 'pending')
     OR is_admin()
   );
 
+DROP POLICY IF EXISTS "disputes_delete_own_pending" ON conduct_disputes;
 CREATE POLICY "disputes_delete_own_pending" ON conduct_disputes
   FOR DELETE USING (
     disputed_by = my_company_id() AND status = 'pending'
   );
 
 -- ── Audit Logs ────────────────────────────────────────────────
+DROP POLICY IF EXISTS "audit_select_own" ON audit_logs;
 CREATE POLICY "audit_select_own"   ON audit_logs FOR SELECT USING (company_id = my_company_id() OR is_admin());
 -- Admins can log platform-level actions (e.g. resolving a dispute) that
 -- aren't scoped to their own company, hence company_id may be NULL for
 -- those rows — without the is_admin() branch here, those inserts would
 -- be silently rejected by RLS since NULL = my_company_id() is never true.
+DROP POLICY IF EXISTS "audit_insert" ON audit_logs;
 CREATE POLICY "audit_insert"       ON audit_logs FOR INSERT WITH CHECK (
   company_id = my_company_id() OR (is_admin() AND company_id IS NULL)
 );
@@ -631,23 +647,30 @@ CREATE TRIGGER trg_audit_logs_immutable
 --    is the real backstop for that case.
 
 -- ── Alerts ────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "alerts_select_own" ON alerts;
 CREATE POLICY "alerts_select_own"  ON alerts FOR SELECT USING (company_id = my_company_id());
+DROP POLICY IF EXISTS "alerts_update_own" ON alerts;
 CREATE POLICY "alerts_update_own"  ON alerts FOR UPDATE USING (company_id = my_company_id());
+DROP POLICY IF EXISTS "alerts_insert" ON alerts;
 CREATE POLICY "alerts_insert"      ON alerts FOR INSERT WITH CHECK (TRUE); -- trigger inserts
 
 -- ── Device Tokens ─────────────────────────────────────────────
 -- A user can register/remove their own device's token. The Edge Function
 -- that sends pushes uses the service_role key and bypasses RLS entirely,
 -- so these policies only govern what the app itself can do.
+DROP POLICY IF EXISTS "device_tokens_insert_own" ON device_tokens;
 CREATE POLICY "device_tokens_insert_own" ON device_tokens
   FOR INSERT WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "device_tokens_select_own" ON device_tokens;
 CREATE POLICY "device_tokens_select_own" ON device_tokens
   FOR SELECT USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "device_tokens_update_own" ON device_tokens;
 CREATE POLICY "device_tokens_update_own" ON device_tokens
   FOR UPDATE USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "device_tokens_delete_own" ON device_tokens;
 CREATE POLICY "device_tokens_delete_own" ON device_tokens
   FOR DELETE USING (user_id = auth.uid());
 
@@ -657,6 +680,7 @@ CREATE POLICY "device_tokens_delete_own" ON device_tokens
 -- as SECURITY DEFINER and therefore bypasses RLS entirely. This means the
 -- client can SEE its own rate-limit usage (e.g. to show "X searches left
 -- this minute") but cannot tamper with the counter directly.
+DROP POLICY IF EXISTS "search_rate_limits_select_own" ON search_rate_limits;
 CREATE POLICY "search_rate_limits_select_own" ON search_rate_limits
   FOR SELECT USING (user_id = auth.uid());
 
@@ -668,5 +692,6 @@ VALUES
   ('11111111-1111-1111-1111-111111111111', 'Alpha Shield Security',  'PSC-GH-1042', 'Greater Accra', 'info@alphashield.gh',   '+233201234567', TRUE, NOW()),
   ('22222222-2222-2222-2222-222222222222', 'Eagle Eye Protection',   'PSC-GH-2211', 'Ashanti',       'admin@eagleeye.gh',    '+233207654321', TRUE, NOW()),
   ('33333333-3333-3333-3333-333333333333', 'Guardian Force Ltd',     'PSC-GH-3390', 'Western',       'ops@guardianforce.gh', '+233209876543', FALSE, NULL);
+
 
 
