@@ -4,6 +4,7 @@ import '../models/db_models.dart';
 import '../services/alerts_service.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_max_width.dart';
+import '../widgets/app_skeleton.dart';
 
 class AlertsScreen extends StatefulWidget {
   const AlertsScreen({super.key});
@@ -64,9 +65,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
         stream: _alertsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppTheme.goldAccent),
-            );
+            return const AppSkeletonList(count: 5);
           }
 
           if (snapshot.hasError) {

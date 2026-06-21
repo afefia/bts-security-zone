@@ -15,6 +15,7 @@ import '../config/supabase_service.dart';
 import '../widgets/connectivity_banner.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_max_width.dart';
+import '../widgets/app_skeleton.dart';
 import 'search_screen.dart';
 import 'recruit_profile_screen.dart';
 import 'company_list_screen.dart';
@@ -171,8 +172,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppTheme.goldAccent),
+          ? AppMaxWidth(
+              maxWidth: 700,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const AppSkeletonBox(width: 220, height: 18),
+                    const SizedBox(height: 6),
+                    const AppSkeletonBox(width: 140, height: 12),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: const [
+                        Expanded(child: AppSkeletonStat()),
+                        SizedBox(width: 12),
+                        Expanded(child: AppSkeletonStat()),
+                        SizedBox(width: 12),
+                        Expanded(child: AppSkeletonStat()),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    const AppSkeletonBox(width: 160, height: 14),
+                    const SizedBox(height: 12),
+                    const AppSkeletonList(count: 4, padding: EdgeInsets.zero),
+                  ],
+                ),
+              ),
             )
           : _errorMessage != null
               ? _buildErrorState(context)

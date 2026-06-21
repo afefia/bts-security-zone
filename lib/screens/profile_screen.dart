@@ -6,6 +6,7 @@ import '../models/db_models.dart';
 import '../utils/validators.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_max_width.dart';
+import '../widgets/app_skeleton.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -102,8 +103,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('My Account')),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppTheme.goldAccent))
+          ? AppMaxWidth(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: const [
+                    Center(
+                      child: AppSkeletonBox(
+                          width: 72, height: 72, borderRadius: 36),
+                    ),
+                    SizedBox(height: 28),
+                    AppSkeletonBox(height: 56),
+                    SizedBox(height: 16),
+                    AppSkeletonBox(height: 56),
+                  ],
+                ),
+              ),
+            )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: AppMaxWidth(

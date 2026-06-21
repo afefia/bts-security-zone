@@ -6,6 +6,7 @@ import '../services/fingerprint_service.dart';
 import '../widgets/connectivity_banner.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_max_width.dart';
+import '../widgets/app_screen_entry.dart';
 import 'recruit_profile_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -287,90 +288,93 @@ class _SearchScreenState extends State<SearchScreen> {
                   itemCount: _results.length,
                   itemBuilder: (context, i) {
                     final r = _results[i];
-                    return GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => RecruitProfileScreen(recruit: r),
-                        ),
-                      ).then((_) => _search(_controller.text)),
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppTheme.cardBg,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: r.statusColor.withOpacity(0.4),
+                    return AppListItemEntry(
+                      index: i,
+                      child: GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => RecruitProfileScreen(recruit: r),
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 26,
-                              backgroundColor: r.statusColor.withOpacity(0.15),
-                              child: Text(
-                                r.fullName.isNotEmpty ? r.fullName[0] : '?',
-                                style: TextStyle(
-                                  color: r.statusColor,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
+                        ).then((_) => _search(_controller.text)),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppTheme.cardBg,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: r.statusColor.withOpacity(0.4),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 26,
+                                backgroundColor: r.statusColor.withOpacity(0.15),
+                                child: Text(
+                                  r.fullName.isNotEmpty ? r.fullName[0] : '?',
+                                  style: TextStyle(
+                                    color: r.statusColor,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      r.fullName,
+                                      style: Theme.of(context).textTheme.titleMedium,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      r.idNumber,
+                                      style: Theme.of(context).textTheme.bodyMedium,
+                                    ),
+                                    Text(
+                                      r.region,
+                                      style: Theme.of(context).textTheme.bodyMedium,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Column(
                                 children: [
-                                  Text(
-                                    r.fullName,
-                                    style: Theme.of(context).textTheme.titleMedium,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: r.statusColor.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: r.statusColor.withOpacity(0.5),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      r.statusLabel,
+                                      style: TextStyle(
+                                        color: r.statusColor,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    r.idNumber,
-                                    style: Theme.of(context).textTheme.bodyMedium,
-                                  ),
-                                  Text(
-                                    r.region,
-                                    style: Theme.of(context).textTheme.bodyMedium,
+                                  const SizedBox(height: 6),
+                                  const Icon(
+                                    Icons.chevron_right,
+                                    color: AppTheme.textMuted,
                                   ),
                                 ],
                               ),
-                            ),
-                            Column(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: r.statusColor.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: r.statusColor.withOpacity(0.5),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    r.statusLabel,
-                                    style: TextStyle(
-                                      color: r.statusColor,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 1,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                const Icon(
-                                  Icons.chevron_right,
-                                  color: AppTheme.textMuted,
-                                ),
-                              ],
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     );

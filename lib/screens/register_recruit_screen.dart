@@ -8,6 +8,7 @@ import '../config/supabase_service.dart';
 import '../widgets/connectivity_banner.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_max_width.dart';
+import '../widgets/app_success_overlay.dart';
 import '../utils/validators.dart';
 
 class RegisterRecruitScreen extends StatefulWidget {
@@ -128,20 +129,20 @@ class _RegisterRecruitScreenState extends State<RegisterRecruitScreen> {
       setState(() => _isSubmitting = false);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              result.queuedOffline
-                  ? 'Saved offline — will sync automatically once back online'
-                  : 'Recruit registered successfully!',
+        if (result.queuedOffline) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  'Saved offline — will sync automatically once back online'),
+              backgroundColor: AppTheme.goldAccent,
+              behavior: SnackBarBehavior.floating,
             ),
-            backgroundColor: result.queuedOffline
-                ? AppTheme.goldAccent
-                : AppTheme.successGreen,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        Navigator.pop(context);
+          );
+          Navigator.pop(context);
+        } else {
+          await AppSuccessOverlay.show(context, message: 'Recruit registered');
+          if (mounted) Navigator.pop(context);
+        }
       }
     } catch (e) {
       setState(() {

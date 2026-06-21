@@ -7,6 +7,8 @@ import '../services/company_service.dart';
 import '../services/dispute_service.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_max_width.dart';
+import '../widgets/app_skeleton.dart';
+import '../widgets/app_loading_indicator.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   const AdminPanelScreen({super.key});
@@ -150,8 +152,37 @@ class _OverviewTabState extends State<_OverviewTab> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppTheme.goldAccent),
+      return AppMaxWidth(
+        maxWidth: 700,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              AppSkeletonBox(width: 200, height: 16),
+              SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: AppSkeletonStat()),
+                  SizedBox(width: 12),
+                  Expanded(child: AppSkeletonStat()),
+                ],
+              ),
+              SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(child: AppSkeletonStat()),
+                  SizedBox(width: 12),
+                  Expanded(child: AppSkeletonStat()),
+                ],
+              ),
+              SizedBox(height: 24),
+              AppSkeletonBox(width: 150, height: 14),
+              SizedBox(height: 12),
+              AppSkeletonList(count: 3, padding: EdgeInsets.zero),
+            ],
+          ),
+        ),
       );
     }
 
@@ -973,8 +1004,7 @@ class _DisputesAdminTabState extends State<_DisputesAdminTab> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-          child: CircularProgressIndicator(color: AppTheme.goldAccent));
+      return const AppLoadingIndicator(caption: 'Loading disputes...');
     }
     if (_errorMessage != null) {
       return Center(
@@ -1239,9 +1269,7 @@ class _CompaniesAdminTabState extends State<_CompaniesAdminTab> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppTheme.goldAccent),
-      );
+      return const AppLoadingIndicator(caption: 'Loading companies...');
     }
 
     if (_errorMessage != null) {
@@ -1395,9 +1423,7 @@ class _AuditLogTabState extends State<_AuditLogTab> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppTheme.goldAccent),
-      );
+      return const AppLoadingIndicator(caption: 'Loading audit log...');
     }
 
     if (_errorMessage != null) {

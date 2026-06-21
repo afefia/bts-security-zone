@@ -5,6 +5,7 @@ import '../services/company_service.dart';
 import '../widgets/connectivity_banner.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_max_width.dart';
+import '../widgets/app_skeleton.dart';
 
 class CompanyListScreen extends StatefulWidget {
   const CompanyListScreen({super.key});
@@ -51,9 +52,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Registered Companies')),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppTheme.goldAccent),
-            )
+          ? const AppSkeletonList(count: 6)
           : _errorMessage != null
               ? Center(
                   child: Padding(
