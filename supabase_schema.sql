@@ -295,10 +295,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_recruits_updated_at ON recruits;
 CREATE TRIGGER trg_recruits_updated_at
   BEFORE UPDATE ON recruits
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+DROP TRIGGER IF EXISTS trg_companies_updated_at ON companies;
 CREATE TRIGGER trg_companies_updated_at
   BEFORE UPDATE ON companies
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
@@ -336,6 +338,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_flag_on_conduct ON conduct_records;
 CREATE TRIGGER trg_flag_on_conduct
   AFTER INSERT ON conduct_records
   FOR EACH ROW EXECUTE FUNCTION flag_recruit_on_conduct();
@@ -392,6 +395,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_notify_push_on_alert ON alerts;
 CREATE TRIGGER trg_notify_push_on_alert
   AFTER INSERT ON alerts
   FOR EACH ROW EXECUTE FUNCTION notify_push_on_alert();
@@ -612,6 +616,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trg_audit_logs_immutable ON audit_logs;
 CREATE TRIGGER trg_audit_logs_immutable
   BEFORE UPDATE OR DELETE ON audit_logs
   FOR EACH ROW EXECUTE FUNCTION prevent_audit_log_mutation();
