@@ -31,10 +31,10 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ── Enums ────────────────────────────────────────────────────
-CREATE TYPE recruit_status AS ENUM ('clear', 'flagged', 'terminated', 'suspended');
-CREATE TYPE conduct_type   AS ENUM ('commendation', 'warning', 'suspension', 'misconduct', 'termination');
-CREATE TYPE user_role      AS ENUM ('admin', 'company_user');
-CREATE TYPE audit_action   AS ENUM ('SEARCH', 'REGISTER', 'ADD_RECORD', 'UPDATE', 'VERIFY', 'LOGIN', 'REJECT');
+DO $$ BEGIN CREATE TYPE recruit_status AS ENUM ('clear', 'flagged', 'terminated', 'suspended'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE conduct_type   AS ENUM ('commendation', 'warning', 'suspension', 'misconduct', 'termination'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE user_role      AS ENUM ('admin', 'company_user'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE audit_action   AS ENUM ('SEARCH', 'REGISTER', 'ADD_RECORD', 'UPDATE', 'VERIFY', 'LOGIN', 'REJECT'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ============================================================
 --  COMPANIES
@@ -138,7 +138,7 @@ CREATE INDEX idx_conduct_type    ON conduct_records(type);
 --  deleted — by an admin following a successful dispute, not by the
 --  filing company). If the dispute is rejected, the record stands.
 -- ============================================================
-CREATE TYPE dispute_status AS ENUM ('pending', 'upheld', 'rejected');
+DO $$ BEGIN CREATE TYPE dispute_status AS ENUM ('pending', 'upheld', 'rejected'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 CREATE TABLE conduct_disputes (
   id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
