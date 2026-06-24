@@ -31,15 +31,15 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ── Enums ────────────────────────────────────────────────────
-DO $$ BEGIN CREATE TYPE recruit_status AS ENUM ('clear', 'flagged', 'terminated', 'suspended'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-DO $$ BEGIN CREATE TYPE conduct_type   AS ENUM ('commendation', 'warning', 'suspension', 'misconduct', 'termination'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-DO $$ BEGIN CREATE TYPE user_role      AS ENUM ('admin', 'company_user'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-DO $$ BEGIN CREATE TYPE audit_action   AS ENUM ('SEARCH', 'REGISTER', 'ADD_RECORD', 'UPDATE', 'VERIFY', 'LOGIN', 'REJECT'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+CREATE TYPE recruit_status AS ENUM ('clear', 'flagged', 'terminated', 'suspended');
+CREATE TYPE conduct_type   AS ENUM ('commendation', 'warning', 'suspension', 'misconduct', 'termination');
+CREATE TYPE user_role      AS ENUM ('admin', 'company_user');
+CREATE TYPE audit_action   AS ENUM ('SEARCH', 'REGISTER', 'ADD_RECORD', 'UPDATE', 'VERIFY', 'LOGIN', 'REJECT');
 
 -- ============================================================
 --  COMPANIES
 -- ============================================================
-CREATE TABLE IF NOT EXISTS companies (
+CREATE TABLE companies (
   id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name            TEXT NOT NULL CHECK (char_length(trim(name)) BETWEEN 2 AND 150),
   license_number  TEXT NOT NULL UNIQUE CHECK (char_length(license_number) BETWEEN 1 AND 40),
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS companies (
 -- ============================================================
 --  USERS  (one or more users per company)
 -- ============================================================
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
   id            UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   company_id    UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   full_name     TEXT NOT NULL CHECK (char_length(trim(full_name)) BETWEEN 2 AND 120),
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- ============================================================
 --  RECRUITS
 -- ============================================================
-CREATE TABLE IF NOT EXISTS recruits (
+CREATE TABLE recruits (
   id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   full_name         TEXT NOT NULL CHECK (char_length(trim(full_name)) BETWEEN 2 AND 120),
   id_number         TEXT NOT NULL UNIQUE CHECK (char_length(id_number) BETWEEN 1 AND 40),       -- National ID
@@ -84,14 +84,14 @@ CREATE TABLE IF NOT EXISTS recruits (
 );
 
 -- Index for fast lookup
-CREATE INDEX IF NOT EXISTS idx_recruits_id_number        ON recruits(id_number);
-CREATE INDEX IF NOT EXISTS idx_recruits_fingerprint_hash ON recruits(fingerprint_hash);
-CREATE INDEX IF NOT EXISTS idx_recruits_status           ON recruits(status);
+CREATE INDEX idx_recruits_id_number        ON recruits(id_number);
+CREATE INDEX idx_recruits_fingerprint_hash ON recruits(fingerprint_hash);
+CREATE INDEX idx_recruits_status           ON recruits(status);
 
 -- ============================================================
 --  EMPLOYMENT HISTORY
 -- ============================================================
-CREATE TABLE IF NOT EXISTS employment_history (
+CREATE TABLE employment_history (
   id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   recruit_id    UUID NOT NULL REFERENCES recruits(id) ON DELETE CASCADE,
   company_id    UUID NOT NULL REFERENCES companies(id),
@@ -103,13 +103,13 @@ CREATE TABLE IF NOT EXISTS employment_history (
   CONSTRAINT chk_employment_dates CHECK (end_date IS NULL OR end_date >= start_date)
 );
 
-CREATE INDEX IF NOT EXISTS idx_employment_recruit ON employment_history(recruit_id);
-CREATE INDEX IF NOT EXISTS idx_employment_company ON employment_history(company_id);
+CREATE INDEX idx_employment_recruit ON employment_history(recruit_id);
+CREATE INDEX idx_employment_company ON employment_history(company_id);
 
 -- ============================================================
 --  CONDUCT RECORDS
 -- ============================================================
-CREATE TABLE IF NOT EXISTS conduct_records (
+CREATE TABLE conduct_records (
   id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   recruit_id    UUID NOT NULL REFERENCES recruits(id) ON DELETE CASCADE,
   company_id    UUID NOT NULL REFERENCES companies(id),
@@ -121,9 +121,9 @@ CREATE TABLE IF NOT EXISTS conduct_records (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_conduct_recruit ON conduct_records(recruit_id);
-CREATE INDEX IF NOT EXISTS idx_conduct_company ON conduct_records(company_id);
-CREATE INDEX IF NOT EXISTS idx_conduct_type    ON conduct_records(type);
+CREATE INDEX idx_conduct_recruit ON conduct_records(recruit_id);
+CREATE INDEX idx_conduct_company ON conduct_records(company_id);
+CREATE INDEX idx_conduct_type    ON conduct_records(type);
 
 -- ============================================================
 --  CONDUCT RECORD DISPUTES
@@ -138,9 +138,9 @@ CREATE INDEX IF NOT EXISTS idx_conduct_type    ON conduct_records(type);
 --  deleted — by an admin following a successful dispute, not by the
 --  filing company). If the dispute is rejected, the record stands.
 -- ============================================================
-DO $$ BEGIN CREATE TYPE dispute_status AS ENUM ('pending', 'upheld', 'rejected'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+CREATE TYPE dispute_status AS ENUM ('pending', 'upheld', 'rejected');
 
-CREATE TABLE IF NOT EXISTS conduct_disputes (
+CREATE TABLE conduct_disputes (
   id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   conduct_record_id UUID NOT NULL REFERENCES conduct_records(id) ON DELETE CASCADE,
   disputed_by       UUID NOT NULL REFERENCES companies(id),
@@ -156,14 +156,14 @@ CREATE TABLE IF NOT EXISTS conduct_disputes (
   UNIQUE (conduct_record_id, disputed_by)
 );
 
-CREATE INDEX IF NOT EXISTS idx_disputes_record ON conduct_disputes(conduct_record_id);
-CREATE INDEX IF NOT EXISTS idx_disputes_status ON conduct_disputes(status);
-CREATE INDEX IF NOT EXISTS idx_disputes_company ON conduct_disputes(disputed_by);
+CREATE INDEX idx_disputes_record ON conduct_disputes(conduct_record_id);
+CREATE INDEX idx_disputes_status ON conduct_disputes(status);
+CREATE INDEX idx_disputes_company ON conduct_disputes(disputed_by);
 
 -- ============================================================
 --  AUDIT LOGS
 -- ============================================================
-CREATE TABLE IF NOT EXISTS audit_logs (
+CREATE TABLE audit_logs (
   id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   company_id    UUID REFERENCES companies(id),
   user_id       UUID REFERENCES users(id),
@@ -174,13 +174,13 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_audit_company    ON audit_logs(company_id);
-CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_logs(created_at DESC);
+CREATE INDEX idx_audit_company    ON audit_logs(company_id);
+CREATE INDEX idx_audit_created_at ON audit_logs(created_at DESC);
 
 -- ============================================================
 --  ALERTS
 -- ============================================================
-CREATE TABLE IF NOT EXISTS alerts (
+CREATE TABLE alerts (
   id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   company_id    UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   title         TEXT NOT NULL,
@@ -191,8 +191,8 @@ CREATE TABLE IF NOT EXISTS alerts (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_alerts_company ON alerts(company_id);
-CREATE INDEX IF NOT EXISTS idx_alerts_unread  ON alerts(company_id, is_read) WHERE is_read = FALSE;
+CREATE INDEX idx_alerts_company ON alerts(company_id);
+CREATE INDEX idx_alerts_unread  ON alerts(company_id, is_read) WHERE is_read = FALSE;
 
 -- ============================================================
 --  DEVICE TOKENS — for push notification delivery (FCM)
@@ -203,7 +203,7 @@ CREATE INDEX IF NOT EXISTS idx_alerts_unread  ON alerts(company_id, is_read) WHE
 --  multiple tokens (multiple devices, or a reinstalled app), so this is
 --  keyed by token rather than by user.
 -- ============================================================
-CREATE TABLE IF NOT EXISTS device_tokens (
+CREATE TABLE device_tokens (
   token         TEXT PRIMARY KEY,
   user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   company_id    UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
@@ -212,7 +212,7 @@ CREATE TABLE IF NOT EXISTS device_tokens (
   last_seen_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_device_tokens_company ON device_tokens(company_id);
+CREATE INDEX idx_device_tokens_company ON device_tokens(company_id);
 
 -- ============================================================
 --  SEARCH RATE LIMITING
@@ -246,7 +246,7 @@ CREATE INDEX IF NOT EXISTS idx_device_tokens_company ON device_tokens(company_id
 --  holds one row per user per minute-bucket and old buckets are cheap to
 --  prune (see cleanup note below).
 -- ============================================================
-CREATE TABLE IF NOT EXISTS search_rate_limits (
+CREATE TABLE search_rate_limits (
   user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   minute_bucket TIMESTAMPTZ NOT NULL, -- truncated to the minute
   search_count  INTEGER NOT NULL DEFAULT 0,
@@ -295,12 +295,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trg_recruits_updated_at ON recruits;
 CREATE TRIGGER trg_recruits_updated_at
   BEFORE UPDATE ON recruits
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-DROP TRIGGER IF EXISTS trg_companies_updated_at ON companies;
 CREATE TRIGGER trg_companies_updated_at
   BEFORE UPDATE ON companies
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
@@ -338,7 +336,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trg_flag_on_conduct ON conduct_records;
 CREATE TRIGGER trg_flag_on_conduct
   AFTER INSERT ON conduct_records
   FOR EACH ROW EXECUTE FUNCTION flag_recruit_on_conduct();
@@ -395,93 +392,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trg_notify_push_on_alert ON alerts;
 CREATE TRIGGER trg_notify_push_on_alert
   AFTER INSERT ON alerts
   FOR EACH ROW EXECUTE FUNCTION notify_push_on_alert();
-
--- ============================================================
---  ROLE PERMISSIONS (required for RLS to function)
--- ============================================================
-GRANT USAGE    ON SCHEMA public TO anon;
-GRANT SELECT   ON ALL TABLES IN SCHEMA public TO anon;
-GRANT INSERT   ON ALL TABLES IN SCHEMA public TO anon;
-GRANT UPDATE   ON ALL TABLES IN SCHEMA public TO anon;
-GRANT DELETE   ON ALL TABLES IN SCHEMA public TO anon;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO authenticated;
-
--- ============================================================
---  STORED PROCEDURES (bypass RLS via SECURITY DEFINER)
--- ============================================================
-
--- Registration: called by the app after auth.signUp()
-CREATE OR REPLACE FUNCTION register_company(
-  p_company_name    TEXT,
-  p_license_number  TEXT,
-  p_region          TEXT,
-  p_address         TEXT,
-  p_email           TEXT,
-  p_phone           TEXT,
-  p_user_id         UUID,
-  p_full_name       TEXT
-)
-RETURNS UUID
-SECURITY DEFINER SET search_path = public
-LANGUAGE plpgsql
-AS $$
-DECLARE
-  v_company_id UUID;
-BEGIN
-  INSERT INTO companies (name, license_number, region, address, email, phone, is_verified)
-  VALUES (p_company_name, p_license_number, p_region, p_address, p_email, p_phone, FALSE)
-  RETURNING id INTO v_company_id;
-
-  INSERT INTO users (id, company_id, full_name, email, role)
-  VALUES (p_user_id, v_company_id, p_full_name, p_email, 'company_user');
-
-  RETURN v_company_id;
-END;
-$$;
-
--- Admin: list all companies
-CREATE OR REPLACE FUNCTION admin_get_all_companies()
-RETURNS JSONB
-SECURITY DEFINER SET search_path = public
-LANGUAGE plpgsql
-AS $$
-DECLARE
-  v_result JSONB;
-BEGIN
-  SELECT jsonb_agg(row_to_json(c)::jsonb ORDER BY c.name)
-  FROM (SELECT * FROM companies) c INTO v_result;
-  RETURN COALESCE(v_result, '[]'::jsonb);
-END;
-$$;
-
--- Admin: verify a company
-CREATE OR REPLACE FUNCTION admin_verify_company(p_company_id UUID)
-RETURNS VOID
-SECURITY DEFINER SET search_path = public
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  UPDATE companies
-  SET is_verified = TRUE, verified_at = NOW(), verified_by = auth.uid()
-  WHERE id = p_company_id;
-END;
-$$;
-
--- Admin: reject / delete a company
-CREATE OR REPLACE FUNCTION admin_reject_company(p_company_id UUID)
-RETURNS VOID
-SECURITY DEFINER SET search_path = public
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  DELETE FROM companies WHERE id = p_company_id;
-END;
-$$;
 
 -- ============================================================
 --  ROW LEVEL SECURITY (RLS)
@@ -511,42 +424,33 @@ $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
 -- ── Companies ─────────────────────────────────────────────────
 -- Anyone can register (insert). Only see own company or admin sees all.
-DROP POLICY IF EXISTS "companies_insert_public" ON companies;
 CREATE POLICY "companies_insert_public" ON companies FOR INSERT WITH CHECK (TRUE);
-DROP POLICY IF EXISTS "companies_select_own" ON companies;
 CREATE POLICY "companies_select_own"    ON companies FOR SELECT USING (id = my_company_id() OR is_admin());
-DROP POLICY IF EXISTS "companies_update_admin" ON companies;
 CREATE POLICY "companies_update_admin"  ON companies FOR UPDATE USING (is_admin());
 
 -- ── Users ─────────────────────────────────────────────────────
-DROP POLICY IF EXISTS "users_select_own" ON users;
 CREATE POLICY "users_select_own"  ON users FOR SELECT USING (id = auth.uid() OR is_admin());
-DROP POLICY IF EXISTS "users_insert_self" ON users;
 CREATE POLICY "users_insert_self" ON users FOR INSERT WITH CHECK (id = auth.uid());
 
 
 -- ── Employment History ────────────────────────────────────────
-DROP POLICY IF EXISTS "employment_select" ON employment_history;
 CREATE POLICY "employment_select" ON employment_history
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM companies WHERE id = my_company_id() AND is_verified = TRUE)
     OR is_admin()
   );
 
-DROP POLICY IF EXISTS "employment_insert_own" ON employment_history;
 CREATE POLICY "employment_insert_own" ON employment_history
   FOR INSERT WITH CHECK (company_id = my_company_id());
 
 -- A company can only close out (set end_date/exit_reason on) employment
 -- records that belong to them — not another company's record of the same
 -- recruit. Admins can fix any record.
-DROP POLICY IF EXISTS "employment_update_own" ON employment_history;
 CREATE POLICY "employment_update_own" ON employment_history
   FOR UPDATE USING (company_id = my_company_id() OR is_admin());
 
 -- ── Conduct Records ───────────────────────────────────────────
 -- All verified companies can READ all conduct records (cross-company transparency)
-DROP POLICY IF EXISTS "conduct_select_verified" ON conduct_records;
 CREATE POLICY "conduct_select_verified" ON conduct_records
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM companies WHERE id = my_company_id() AND is_verified = TRUE)
@@ -554,7 +458,6 @@ CREATE POLICY "conduct_select_verified" ON conduct_records
   );
 
 -- Only the company that owns the record can INSERT it
-DROP POLICY IF EXISTS "conduct_insert_own" ON conduct_records;
 CREATE POLICY "conduct_insert_own" ON conduct_records
   FOR INSERT WITH CHECK (company_id = my_company_id());
 
@@ -563,14 +466,12 @@ CREATE POLICY "conduct_insert_own" ON conduct_records
 -- see if a record against a candidate is contested), can file their
 -- own dispute, and can update/delete only their own pending dispute.
 -- Admins can do everything including resolve disputes.
-DROP POLICY IF EXISTS "disputes_select_verified" ON conduct_disputes;
 CREATE POLICY "disputes_select_verified" ON conduct_disputes
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM companies WHERE id = my_company_id() AND is_verified = TRUE)
     OR is_admin()
   );
 
-DROP POLICY IF EXISTS "disputes_insert_verified" ON conduct_disputes;
 CREATE POLICY "disputes_insert_verified" ON conduct_disputes
   FOR INSERT WITH CHECK (
     disputed_by = my_company_id()
@@ -578,27 +479,23 @@ CREATE POLICY "disputes_insert_verified" ON conduct_disputes
   );
 
 -- Companies can withdraw their own pending dispute; admins resolve all
-DROP POLICY IF EXISTS "disputes_update" ON conduct_disputes;
 CREATE POLICY "disputes_update" ON conduct_disputes
   FOR UPDATE USING (
     (disputed_by = my_company_id() AND status = 'pending')
     OR is_admin()
   );
 
-DROP POLICY IF EXISTS "disputes_delete_own_pending" ON conduct_disputes;
 CREATE POLICY "disputes_delete_own_pending" ON conduct_disputes
   FOR DELETE USING (
     disputed_by = my_company_id() AND status = 'pending'
   );
 
 -- ── Audit Logs ────────────────────────────────────────────────
-DROP POLICY IF EXISTS "audit_select_own" ON audit_logs;
 CREATE POLICY "audit_select_own"   ON audit_logs FOR SELECT USING (company_id = my_company_id() OR is_admin());
 -- Admins can log platform-level actions (e.g. resolving a dispute) that
 -- aren't scoped to their own company, hence company_id may be NULL for
 -- those rows — without the is_admin() branch here, those inserts would
 -- be silently rejected by RLS since NULL = my_company_id() is never true.
-DROP POLICY IF EXISTS "audit_insert" ON audit_logs;
 CREATE POLICY "audit_insert"       ON audit_logs FOR INSERT WITH CHECK (
   company_id = my_company_id() OR (is_admin() AND company_id IS NULL)
 );
@@ -632,7 +529,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-DROP TRIGGER IF EXISTS trg_audit_logs_immutable ON audit_logs;
 CREATE TRIGGER trg_audit_logs_immutable
   BEFORE UPDATE OR DELETE ON audit_logs
   FOR EACH ROW EXECUTE FUNCTION prevent_audit_log_mutation();
@@ -647,30 +543,23 @@ CREATE TRIGGER trg_audit_logs_immutable
 --    is the real backstop for that case.
 
 -- ── Alerts ────────────────────────────────────────────────────
-DROP POLICY IF EXISTS "alerts_select_own" ON alerts;
 CREATE POLICY "alerts_select_own"  ON alerts FOR SELECT USING (company_id = my_company_id());
-DROP POLICY IF EXISTS "alerts_update_own" ON alerts;
 CREATE POLICY "alerts_update_own"  ON alerts FOR UPDATE USING (company_id = my_company_id());
-DROP POLICY IF EXISTS "alerts_insert" ON alerts;
 CREATE POLICY "alerts_insert"      ON alerts FOR INSERT WITH CHECK (TRUE); -- trigger inserts
 
 -- ── Device Tokens ─────────────────────────────────────────────
 -- A user can register/remove their own device's token. The Edge Function
 -- that sends pushes uses the service_role key and bypasses RLS entirely,
 -- so these policies only govern what the app itself can do.
-DROP POLICY IF EXISTS "device_tokens_insert_own" ON device_tokens;
 CREATE POLICY "device_tokens_insert_own" ON device_tokens
   FOR INSERT WITH CHECK (user_id = auth.uid());
 
-DROP POLICY IF EXISTS "device_tokens_select_own" ON device_tokens;
 CREATE POLICY "device_tokens_select_own" ON device_tokens
   FOR SELECT USING (user_id = auth.uid());
 
-DROP POLICY IF EXISTS "device_tokens_update_own" ON device_tokens;
 CREATE POLICY "device_tokens_update_own" ON device_tokens
   FOR UPDATE USING (user_id = auth.uid());
 
-DROP POLICY IF EXISTS "device_tokens_delete_own" ON device_tokens;
 CREATE POLICY "device_tokens_delete_own" ON device_tokens
   FOR DELETE USING (user_id = auth.uid());
 
@@ -680,7 +569,6 @@ CREATE POLICY "device_tokens_delete_own" ON device_tokens
 -- as SECURITY DEFINER and therefore bypasses RLS entirely. This means the
 -- client can SEE its own rate-limit usage (e.g. to show "X searches left
 -- this minute") but cannot tamper with the counter directly.
-DROP POLICY IF EXISTS "search_rate_limits_select_own" ON search_rate_limits;
 CREATE POLICY "search_rate_limits_select_own" ON search_rate_limits
   FOR SELECT USING (user_id = auth.uid());
 
@@ -692,6 +580,84 @@ VALUES
   ('11111111-1111-1111-1111-111111111111', 'Alpha Shield Security',  'PSC-GH-1042', 'Greater Accra', 'info@alphashield.gh',   '+233201234567', TRUE, NOW()),
   ('22222222-2222-2222-2222-222222222222', 'Eagle Eye Protection',   'PSC-GH-2211', 'Ashanti',       'admin@eagleeye.gh',    '+233207654321', TRUE, NOW()),
   ('33333333-3333-3333-3333-333333333333', 'Guardian Force Ltd',     'PSC-GH-3390', 'Western',       'ops@guardianforce.gh', '+233209876543', FALSE, NULL);
+-- ============================================================
+--  PATCH — Run this AFTER your working supabase_schema.sql
+--  Adds GRANTs + stored procedures that the Flutter app needs.
+--  Does NOT create or modify any tables/types/policies.
+--  Safe to re-run multiple times (all CREATE OR REPLACE).
+-- ============================================================
 
+-- 1. GRANT table permissions to anon role (needed for RLS to work)
+GRANT USAGE    ON SCHEMA public TO anon;
+GRANT SELECT   ON ALL TABLES IN SCHEMA public TO anon;
+GRANT INSERT   ON ALL TABLES IN SCHEMA public TO anon;
+GRANT UPDATE   ON ALL TABLES IN SCHEMA public TO anon;
+GRANT DELETE   ON ALL TABLES IN SCHEMA public TO anon;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO authenticated;
 
+-- 2. Registration stored procedure (called by the app after auth.signUp())
+CREATE OR REPLACE FUNCTION register_company(
+  p_company_name    TEXT,
+  p_license_number  TEXT,
+  p_region          TEXT,
+  p_address         TEXT,
+  p_email           TEXT,
+  p_phone           TEXT,
+  p_user_id         UUID,
+  p_full_name       TEXT
+)
+RETURNS UUID
+SECURITY DEFINER SET search_path = public
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_company_id UUID;
+BEGIN
+  INSERT INTO companies (name, license_number, region, address, email, phone, is_verified)
+  VALUES (p_company_name, p_license_number, p_region, p_address, p_email, p_phone, FALSE)
+  RETURNING id INTO v_company_id;
 
+  INSERT INTO users (id, company_id, full_name, email, role)
+  VALUES (p_user_id, v_company_id, p_full_name, p_email, 'company_user');
+
+  RETURN v_company_id;
+END;
+$$;
+
+-- 3. Admin stored procedures
+CREATE OR REPLACE FUNCTION admin_get_all_companies()
+RETURNS JSONB
+SECURITY DEFINER SET search_path = public
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_result JSONB;
+BEGIN
+  SELECT jsonb_agg(row_to_json(c)::jsonb ORDER BY c.name)
+  FROM (SELECT * FROM companies) c INTO v_result;
+  RETURN COALESCE(v_result, '[]'::jsonb);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION admin_verify_company(p_company_id UUID)
+RETURNS VOID
+SECURITY DEFINER SET search_path = public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  UPDATE companies
+  SET is_verified = TRUE, verified_at = NOW(), verified_by = auth.uid()
+  WHERE id = p_company_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION admin_reject_company(p_company_id UUID)
+RETURNS VOID
+SECURITY DEFINER SET search_path = public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  DELETE FROM companies WHERE id = p_company_id;
+END;
+$$;
