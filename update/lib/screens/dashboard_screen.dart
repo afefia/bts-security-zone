@@ -301,16 +301,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     builder: (_) => const CompanyListScreen()),
                               ),
                             ),
-                            _ActionCard(
-                              icon: Icons.admin_panel_settings,
-                              label: 'Admin Panel',
-                              subtitle: 'Reports & oversight',
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const AdminPanelScreen()),
+                            if (_myProfile?.isAdmin ?? false)
+                              _ActionCard(
+                                icon: Icons.admin_panel_settings,
+                                label: 'Admin Panel',
+                                subtitle: 'Reports & oversight',
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => const AdminPanelScreen()),
+                                ),
                               ),
-                            ),
                           ],
                         ),
                         const SizedBox(height: 24),
@@ -331,7 +332,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                             ),
                             AppButton.text(
-                              label: 'View All',
+                              label: 'Search All',
+                              icon: Icons.search,
                               compact: true,
                               onPressed: () => Navigator.push(
                                 context,

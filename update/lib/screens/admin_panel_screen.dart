@@ -20,11 +20,35 @@ class AdminPanelScreen extends StatefulWidget {
 class _AdminPanelScreenState extends State<AdminPanelScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final _companyService = CompanyService();
+  bool _checkingAccess = true;
+  bool _isAuthorized = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
+    _checkAccess();
+  }
+
+  /// Verifies the current user is actually an admin before showing any
+  /// tab content. The drawer and dashboard quick-action both already
+  /// hide the navigation entry point from non-admins, but hiding a
+  /// button is a UX nicety, not a security boundary — anyone who reaches
+  /// this screen by another route (a deep link, a future code path that
+  /// forgets the same guard) would otherwise see admin data with nothing
+  /// stopping them. This check makes the screen defend itself regardless
+  /// of how it was opened. The database's own RLS policies are the real
+  /// backstop underneath this — this check exists so a non-admin gets a
+  /// clear "you don't have access" screen instead of a confusing wall of
+  /// empty/failed queries.
+  Future<void> _checkAccess() async {
+    final profile = await _companyService.getMyProfile();
+    if (!mounted) return;
+    setState(() {
+      _isAuthorized = profile?.isAdmin ?? false;
+      _checkingAccess = false;
+    });
   }
 
   @override
@@ -35,6 +59,48 @@ class _AdminPanelScreenState extends State<AdminPanelScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (_checkingAccess) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: AppTheme.goldAccent),
+        ),
+      );
+    }
+
+    if (!_isAuthorized) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Admin Panel')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.lock_outline,
+                    color: AppTheme.dangerRed, size: 48),
+                const SizedBox(height: 16),
+                Text(
+                  'Admin access required',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Your account doesn\'t have permission to view this page.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                AppButton.secondary(
+                  label: 'GO BACK',
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Admin Panel'),
@@ -1702,13 +1768,13 @@ class _CompanyAdminTile extends StatelessWidget {
                 _ActionBtn(
                   label: 'APPROVE',
                   color: AppTheme.successGreen,
-                  onTap: onApprove ?? () {},
+                  onTap: onApprove!,
                 ),
                 const SizedBox(width: 8),
                 _ActionBtn(
                   label: 'REJECT',
                   color: AppTheme.dangerRed,
-                  onTap: onReject ?? () {},
+                  onTap: onReject!,
                 ),
               ] else
                 const Icon(Icons.verified,
