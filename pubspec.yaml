@@ -49,6 +49,9 @@ dependencies:
   # secugen_flutter: ^1.0.0     # SecuGen Hamster series
   # digitalpersona_sdk: ^1.0.0  # DigitalPersona U.are.U readers
 
+  # Photos
+  image_picker: ^1.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
