@@ -9,6 +9,7 @@ import '../widgets/app_button.dart';
 import '../widgets/app_max_width.dart';
 import '../widgets/app_skeleton.dart';
 import '../widgets/app_loading_indicator.dart';
+import 'search_screen.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   const AdminPanelScreen({super.key});
@@ -121,12 +122,12 @@ class _AdminPanelScreenState extends State<AdminPanelScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [
-          _OverviewTab(),
-          _AnalyticsTab(),
-          _DisputesAdminTab(),
-          _CompaniesAdminTab(),
-          _AuditLogTab(),
+        children: [
+          _OverviewTab(onNavigateToTab: (i) => _tabController.animateTo(i)),
+          const _AnalyticsTab(),
+          const _DisputesAdminTab(),
+          const _CompaniesAdminTab(),
+          const _AuditLogTab(),
         ],
       ),
     );
@@ -136,7 +137,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen>
 // ── Overview Tab ──────────────────────────────────────────────────────────────
 
 class _OverviewTab extends StatefulWidget {
-  const _OverviewTab();
+  final void Function(int tabIndex) onNavigateToTab;
+  const _OverviewTab({required this.onNavigateToTab});
 
   @override
   State<_OverviewTab> createState() => _OverviewTabState();
@@ -278,17 +280,26 @@ class _OverviewTabState extends State<_OverviewTab> {
 
     final statCards = [
       _AdminStat('Total Recruits', '${_stats['totalRecruits'] ?? 0}',
-          Icons.people, AppTheme.successGreen),
+          Icons.people, AppTheme.successGreen,
+          () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const SearchScreen()))),
       _AdminStat('Companies', '${_stats['totalCompanies'] ?? 0}',
-          Icons.business, AppTheme.steelBlue),
+          Icons.business, AppTheme.steelBlue,
+          () => widget.onNavigateToTab(3)),
       _AdminStat('Flagged Records', '${_stats['flaggedRecords'] ?? 0}',
-          Icons.flag, AppTheme.dangerRed),
+          Icons.flag, AppTheme.dangerRed,
+          () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const SearchScreen()))),
       _AdminStat('Pending Approvals', '${_stats['pendingApprovals'] ?? 0}',
-          Icons.hourglass_top, AppTheme.goldAccent),
+          Icons.hourglass_top, AppTheme.goldAccent,
+          () => widget.onNavigateToTab(3)),
       _AdminStat('Searches Today', '${_stats['searchesToday'] ?? 0}',
-          Icons.search, const Color(0xFF9B59B6)),
+          Icons.search, const Color(0xFF9B59B6),
+          () => widget.onNavigateToTab(4)),
       _AdminStat('New This Month', '${_stats['newThisMonth'] ?? 0}',
-          Icons.trending_up, AppTheme.goldLight),
+          Icons.trending_up, AppTheme.goldLight,
+          () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const SearchScreen()))),
     ];
 
     return RefreshIndicator(
@@ -313,31 +324,31 @@ class _OverviewTabState extends State<_OverviewTab> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.6,
-              children: statCards.map((s) => _AdminStatCard(stat: s)).toList(),
-            ),
-            const SizedBox(height: 24),
-            const _AdminSectionLabel('RECENT ACTIVITY'),
-            const SizedBox(height: 12),
-            if (_recentActivity.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Center(
-                  child: Text('No recent activity',
-                      style: Theme.of(context).textTheme.bodyMedium),
-                ),
-              )
-            else
-              ..._recentActivity.map((a) => _ActivityTile(
-                    icon: _iconForAction(a.action),
-                    color: _colorForAction(a.action),
-                    title: a.action.replaceAll('_', ' '),
-                    subtitle: '${a.companyName}: ${a.detail}',
-                    time: _timeAgo(a.createdAt),
-                  )),
-          ],
-        ),
+                mainAxisSpacing: 12,
+                childAspectRatio: 1.6,
+                children: statCards.map((s) => _AdminStatCard(stat: s)).toList(),
+              ),
+              const SizedBox(height: 24),
+              const _AdminSectionLabel('RECENT ACTIVITY'),
+              const SizedBox(height: 12),
+              if (_recentActivity.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: Text('No recent activity',
+                        style: Theme.of(context).textTheme.bodyMedium),
+                  ),
+                )
+              else
+                ..._recentActivity.map((a) => _ActivityTile(
+                      icon: _iconForAction(a.action),
+                      color: _colorForAction(a.action),
+                      title: a.action.replaceAll('_', ' '),
+                      subtitle: '${a.companyName}: ${a.detail}',
+                      time: _timeAgo(a.createdAt),
+                    )),
+            ],
+          ),
         ),
       ),
     );
@@ -1127,77 +1138,77 @@ class _DisputesAdminTabState extends State<_DisputesAdminTab> {
                 ],
               )
             : ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              itemCount: _disputes.length,
-              itemBuilder: (context, i) {
-                final d = _disputes[i];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 14),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.cardBg,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: AppTheme.goldAccent.withOpacity(0.4)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.flag_outlined,
-                              color: AppTheme.goldAccent, size: 16),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              'Disputed by ${d.disputedByCompanyName}',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(fontSize: 13),
-                            ),
-                          ),
-                          Text(
-                            '${d.createdAt.day}/${d.createdAt.month}/${d.createdAt.year}',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        d.reason,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 14),
-                      Center(
-                        child: Wrap(
-                          spacing: 10,
-                          alignment: WrapAlignment.center,
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                itemCount: _disputes.length,
+                itemBuilder: (context, i) {
+                  final d = _disputes[i];
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardBg,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: AppTheme.goldAccent.withOpacity(0.4)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            AppButton.danger(
-                              label: 'REJECT',
-                              icon: Icons.close,
-                              compact: true,
-                              onPressed: () => _showResolveDialog(d, false),
+                            const Icon(Icons.flag_outlined,
+                                color: AppTheme.goldAccent, size: 16),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'Disputed by ${d.disputedByCompanyName}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(fontSize: 13),
+                              ),
                             ),
-                            AppButton.success(
-                              label: 'UPHOLD',
-                              icon: Icons.check,
-                              compact: true,
-                              onPressed: () => _showResolveDialog(d, true),
+                            Text(
+                              '${d.createdAt.day}/${d.createdAt.month}/${d.createdAt.year}',
+                              style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-            ),
+                        const SizedBox(height: 8),
+                        Text(
+                          d.reason,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 14),
+                        Center(
+                          child: Wrap(
+                            spacing: 10,
+                            alignment: WrapAlignment.center,
+                            children: [
+                              AppButton.danger(
+                                label: 'REJECT',
+                                icon: Icons.close,
+                                compact: true,
+                                onPressed: () => _showResolveDialog(d, false),
+                              ),
+                              AppButton.success(
+                                label: 'UPHOLD',
+                                icon: Icons.check,
+                                compact: true,
+                                onPressed: () => _showResolveDialog(d, true),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+      ),
     );
   }
 }
@@ -1629,42 +1640,59 @@ class _PanelHeader extends StatelessWidget {
   }
 }
 
+/// Renders one _AdminStat as a tappable card. This was the actual bug
+/// behind "the cards aren't clickable" — the data layer (_AdminStat,
+/// the onTap callbacks wired into statCards above) was always correct,
+/// but this rendering widget had been lost, so every card was just
+/// inert decoration with nowhere for its onTap to attach to.
 class _AdminStatCard extends StatelessWidget {
   final _AdminStat stat;
+
   const _AdminStatCard({required this.stat});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: stat.color.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Icon(stat.icon, color: stat.color, size: 22),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                stat.value,
-                style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: stat.color),
+    return InkWell(
+      onTap: stat.onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.cardBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: stat.color.withOpacity(0.35)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(stat.icon, color: stat.color, size: 22),
+                if (stat.onTap != null)
+                  Icon(Icons.chevron_right,
+                      color: AppTheme.textMuted.withOpacity(0.6), size: 18),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              stat.value,
+              style: const TextStyle(
+                color: AppTheme.offWhite,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
               ),
-              Text(stat.label,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(fontSize: 11)),
-            ],
-          ),
-        ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              stat.label,
+              style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1876,5 +1904,6 @@ class _AdminStat {
   final String value;
   final IconData icon;
   final Color color;
-  const _AdminStat(this.label, this.value, this.icon, this.color);
+  final VoidCallback? onTap;
+  const _AdminStat(this.label, this.value, this.icon, this.color, [this.onTap]);
 }

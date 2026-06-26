@@ -8,6 +8,7 @@ import '../config/supabase_service.dart';
 import '../widgets/connectivity_banner.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_max_width.dart';
+import '../widgets/app_verified_gate.dart';
 import '../utils/validators.dart';
 
 class AddConductRecordScreen extends StatefulWidget {
@@ -161,6 +162,10 @@ class _AddConductRecordScreenState extends State<AddConductRecordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return AppVerifiedGate(child: _buildScreen(context));
+  }
+
+  Widget _buildScreen(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Add Conduct Record')),
       body: SingleChildScrollView(

@@ -8,6 +8,7 @@ import '../config/supabase_service.dart';
 import '../widgets/connectivity_banner.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_max_width.dart';
+import '../widgets/app_verified_gate.dart';
 import '../widgets/app_success_overlay.dart';
 import '../utils/validators.dart';
 
@@ -154,6 +155,10 @@ class _RegisterRecruitScreenState extends State<RegisterRecruitScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return AppVerifiedGate(child: _buildScreen(context));
+  }
+
+  Widget _buildScreen(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Register Recruit')),
       body: SingleChildScrollView(

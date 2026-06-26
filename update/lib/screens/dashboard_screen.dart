@@ -755,8 +755,12 @@ class _AppDrawer extends StatelessWidget {
 
             _DrawerItem(
               icon: Icons.settings_outlined,
-              label: 'Settings',
-              onTap: () => Navigator.pop(context),
+              label: 'My Account',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                    context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+              },
             ),
 
             const Spacer(),

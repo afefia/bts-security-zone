@@ -3,7 +3,10 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// Local SQLite cache so the app stays usable when connectivity drops.
+/// Local SQLite cache so the app stays usable when connectivity drops —
+/// the scenario that matters most here, since recruit verification often
+/// happens at the exact moment someone walks into a new office, which is
+/// not guaranteed to be a moment with a good signal.
 ///
 /// Two jobs:
 /// 1. CACHE  — last-synced recruits/companies/conduct records, readable
@@ -37,6 +40,9 @@ class LocalDb {
       path,
       version: _dbVersion,
       onCreate: (db, version) async {
+        // Cached recruits — denormalized JSON blob keeps this simple and
+        // resilient to schema drift; the canonical shape lives in
+        // db_models.dart / Supabase, this is just a mirror.
         await db.execute('''
           CREATE TABLE cached_recruits (
             id TEXT PRIMARY KEY,
@@ -59,6 +65,7 @@ class LocalDb {
           )
         ''');
 
+        // Pending writes made while offline, replayed on reconnect.
         await db.execute('''
           CREATE TABLE outbox (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -70,6 +77,7 @@ class LocalDb {
           )
         ''');
 
+        // Simple key/value table for "last full sync" timestamps etc.
         await db.execute('''
           CREATE TABLE sync_meta (
             key TEXT PRIMARY KEY,
@@ -253,6 +261,9 @@ class LocalDb {
     return rows.first['value'] as String;
   }
 
+  /// Convenience wrappers around sync_meta specifically for the logged-in
+  /// user's company_id, since that's needed by every offline write and
+  /// would otherwise require a network call just to look up.
   static Future<void> cacheMyCompanyId(String companyId) =>
       setMeta('my_company_id', companyId);
 

@@ -7,12 +7,10 @@ class AdminService {
   Future<Map<String, int>> getOverviewStats() async {
     final recruits = await _client.from('recruits').select('id, status');
     final companies = await _client.from('companies').select('id, is_verified');
-    final flagged = (recruits as List)
-        .where((r) => r['status'] != 'clear')
-        .length;
-    final pending = (companies as List)
-        .where((c) => c['is_verified'] == false)
-        .length;
+    final flagged =
+        (recruits as List).where((r) => r['status'] != 'clear').length;
+    final pending =
+        (companies as List).where((c) => c['is_verified'] == false).length;
 
     final today = DateTime.now();
     final startOfDay =
@@ -23,8 +21,7 @@ class AdminService {
         .eq('action', 'SEARCH')
         .gte('created_at', startOfDay);
 
-    final startOfMonth =
-        DateTime(today.year, today.month, 1).toIso8601String();
+    final startOfMonth = DateTime(today.year, today.month, 1).toIso8601String();
     final newThisMonth = await _client
         .from('recruits')
         .select('id')
@@ -145,8 +142,8 @@ class AdminService {
     final buckets = <DateTime, int>{};
     final now = DateTime.now();
     for (int i = days - 1; i >= 0; i--) {
-      final day = DateTime(now.year, now.month, now.day)
-          .subtract(Duration(days: i));
+      final day =
+          DateTime(now.year, now.month, now.day).subtract(Duration(days: i));
       buckets[day] = 0;
     }
     for (final ts in timestamps) {

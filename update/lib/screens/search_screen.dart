@@ -6,6 +6,7 @@ import '../services/fingerprint_service.dart';
 import '../widgets/connectivity_banner.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_max_width.dart';
+import '../widgets/app_verified_gate.dart';
 import '../widgets/app_screen_entry.dart';
 import 'recruit_profile_screen.dart';
 
@@ -115,6 +116,10 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return AppVerifiedGate(child: _buildScreen(context));
+  }
+
+  Widget _buildScreen(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Search & Verify')),
       body: Padding(
