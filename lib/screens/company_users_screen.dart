@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../theme/app_theme.dart';
-import '../models/db_models.dart';
-import '../services/auth_service.dart';
-import '../services/company_service.dart';
 import '../config/supabase_service.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_max_width.dart';
@@ -17,8 +15,6 @@ class CompanyUsersScreen extends StatefulWidget {
 }
 
 class _CompanyUsersScreenState extends State<CompanyUsersScreen> {
-  final _authService = AuthService();
-  final _companyService = CompanyService();
   List<Map<String, dynamic>> _users = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -40,7 +36,13 @@ class _CompanyUsersScreenState extends State<CompanyUsersScreen> {
     setState(() => _isLoading = true);
     try {
       final user = SupabaseService.currentUser;
-      if (user == null) return;
+      if (user == null) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Not authenticated';
+        });
+        return;
+      }
 
       // Get the current user's company
       final userData = await SupabaseService.client
@@ -49,7 +51,13 @@ class _CompanyUsersScreenState extends State<CompanyUsersScreen> {
           .eq('id', user.id)
           .maybeSingle();
 
-      if (userData == null) return;
+      if (userData == null || userData['company_id'] == null) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'No company found for your account.';
+        });
+        return;
+      }
 
       _companyId = userData['company_id'] as String;
 
@@ -57,7 +65,7 @@ class _CompanyUsersScreenState extends State<CompanyUsersScreen> {
       final data = await SupabaseService.client
           .from('users')
           .select('id, full_name, email, role, created_at')
-          .eq('company_id', _companyId)
+          .eq('company_id', _companyId as Object)
           .order('full_name');
 
       setState(() {
@@ -67,16 +75,20 @@ class _CompanyUsersScreenState extends State<CompanyUsersScreen> {
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Failed to load users: ${e.toString().replaceFirst("Exception: ", "")}';
+        _errorMessage =
+            'Failed to load users: ${e.toString().replaceFirst("Exception: ", "")}';
       });
     }
   }
 
   Future<void> _inviteUser() async {
-    if (_inviteEmailCtrl.text.trim().isEmpty || _inviteNameCtrl.text.trim().isEmpty) {
+    if (_inviteEmailCtrl.text.trim().isEmpty ||
+        _inviteNameCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields'),
-            backgroundColor: AppTheme.dangerRed, behavior: SnackBarBehavior.floating),
+        const SnackBar(
+            content: Text('Please fill in all fields'),
+            backgroundColor: AppTheme.dangerRed,
+            behavior: SnackBarBehavior.floating),
       );
       return;
     }
@@ -84,34 +96,67 @@ class _CompanyUsersScreenState extends State<CompanyUsersScreen> {
     setState(() => _isInviting = true);
 
     try {
-      // Check if user already exists in auth
-      // We'll create the auth account and link to company
+      if (_companyId == null) {
+        setState(() => _isInviting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('No company ID. Cannot add user.'),
+              backgroundColor: AppTheme.dangerRed,
+              behavior: SnackBarBehavior.floating),
+        );
+        return;
+      }
+
       final email = _inviteEmailCtrl.text.trim();
       final name = Validators.sanitize(_inviteNameCtrl.text.trim());
       final role = _inviteRole;
       final tempPassword = 'Temp@${DateTime.now().millisecondsSinceEpoch}';
 
-      // Sign up the new user
-      final result = await _authService.signUp(
-        email: email,
-        password: tempPassword,
-        fullName: name,
-        region: '',
-        address: '',
-        phone: '',
-        licenseNumber: '',
-        companyName: '', // Not needed — we'll link to existing company
-      );
-
-      if (!result.success) {
-        // User might already exist in auth — try to link them
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.error ?? 'Failed to create user. The email may already be registered.'),
-              backgroundColor: AppTheme.dangerRed, behavior: SnackBarBehavior.floating),
+      // Create auth account
+      User? newUser;
+      try {
+        final authResponse = await SupabaseService.client.auth.signUp(
+          email: email,
+          password: tempPassword,
         );
+        newUser = authResponse.user;
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${e.toString().replaceFirst("Exception: ", "")}'),
+              backgroundColor: AppTheme.dangerRed,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
         setState(() => _isInviting = false);
         return;
       }
+
+      if (newUser == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  'Failed to create user. The email may already be registered.'),
+              backgroundColor: AppTheme.dangerRed,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        setState(() => _isInviting = false);
+        return;
+      }
+
+      // Link the new user to this company
+      await SupabaseService.client.from('users').insert(<String, dynamic>{
+        'id': newUser!.id,
+        'company_id': _companyId,
+        'full_name': name,
+        'email': email,
+        'role': role,
+      });
 
       setState(() => _isInviting = false);
       Navigator.pop(context); // Close dialog
@@ -128,8 +173,11 @@ class _CompanyUsersScreenState extends State<CompanyUsersScreen> {
     } catch (e) {
       setState(() => _isInviting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString().replaceFirst("Exception: ", "")}'),
-            backgroundColor: AppTheme.dangerRed, behavior: SnackBarBehavior.floating),
+        SnackBar(
+            content:
+                Text('Error: ${e.toString().replaceFirst("Exception: ", "")}'),
+            backgroundColor: AppTheme.dangerRed,
+            behavior: SnackBarBehavior.floating),
       );
     }
   }
@@ -152,7 +200,9 @@ class _CompanyUsersScreenState extends State<CompanyUsersScreen> {
                 controller: _inviteNameCtrl,
                 style: const TextStyle(color: AppTheme.offWhite),
                 decoration: const InputDecoration(
-                    labelText: 'Full Name', prefixIcon: Icon(Icons.person_outline), counterText: ''),
+                    labelText: 'Full Name',
+                    prefixIcon: Icon(Icons.person_outline),
+                    counterText: ''),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -160,18 +210,25 @@ class _CompanyUsersScreenState extends State<CompanyUsersScreen> {
                 style: const TextStyle(color: AppTheme.offWhite),
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
-                    labelText: 'Email', prefixIcon: Icon(Icons.email_outlined), counterText: ''),
+                    labelText: 'Email',
+                    prefixIcon: Icon(Icons.email_outlined),
+                    counterText: ''),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: _inviteRole,
                 dropdownColor: AppTheme.navyMid,
                 style: const TextStyle(color: AppTheme.offWhite),
-                decoration: const InputDecoration(labelText: 'Role', prefixIcon: Icon(Icons.admin_panel_settings)),
+                decoration: const InputDecoration(
+                    labelText: 'Role',
+                    prefixIcon: Icon(Icons.admin_panel_settings)),
                 items: const [
-                  DropdownMenuItem(value: 'company_admin', child: Text('Company Admin')),
+                  DropdownMenuItem(
+                      value: 'company_admin', child: Text('Company Admin')),
                   DropdownMenuItem(value: 'company_user', child: Text('User')),
-                  DropdownMenuItem(value: 'company_viewer', child: Text('Viewer (read-only)')),
+                  DropdownMenuItem(
+                      value: 'company_viewer',
+                      child: Text('Viewer (read-only)')),
                 ],
                 onChanged: (v) => setState(() => _inviteRole = v!),
               ),
@@ -197,11 +254,16 @@ class _CompanyUsersScreenState extends State<CompanyUsersScreen> {
 
   String _roleLabel(String role) {
     switch (role) {
-      case 'admin': return 'ADMIN';
-      case 'company_admin': return 'COMPANY ADMIN';
-      case 'company_user': return 'USER';
-      case 'company_viewer': return 'VIEWER';
-      default: return role.toUpperCase();
+      case 'admin':
+        return 'ADMIN';
+      case 'company_admin':
+        return 'COMPANY ADMIN';
+      case 'company_user':
+        return 'USER';
+      case 'company_viewer':
+        return 'VIEWER';
+      default:
+        return role.toUpperCase();
     }
   }
 
@@ -255,7 +317,8 @@ class _CompanyUsersScreenState extends State<CompanyUsersScreen> {
           ],
         ),
         body: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.goldAccent))
+            ? const Center(
+                child: CircularProgressIndicator(color: AppTheme.goldAccent))
             : _errorMessage != null
                 ? Center(
                     child: Padding(
@@ -263,10 +326,13 @@ class _CompanyUsersScreenState extends State<CompanyUsersScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.error_outline, color: AppTheme.dangerRed, size: 48),
+                          const Icon(Icons.error_outline,
+                              color: AppTheme.dangerRed, size: 48),
                           const SizedBox(height: 12),
-                          Text(_errorMessage!, textAlign: TextAlign.center,
-                              style: const TextStyle(color: AppTheme.dangerRed)),
+                          Text(_errorMessage!,
+                              textAlign: TextAlign.center,
+                              style:
+                                  const TextStyle(color: AppTheme.dangerRed)),
                         ],
                       ),
                     ),
@@ -276,9 +342,11 @@ class _CompanyUsersScreenState extends State<CompanyUsersScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.people_outline, color: AppTheme.textMuted, size: 48),
+                            const Icon(Icons.people_outline,
+                                color: AppTheme.textMuted, size: 48),
                             const SizedBox(height: 12),
-                            const Text('No users found', style: TextStyle(color: AppTheme.textMuted)),
+                            const Text('No users found',
+                                style: TextStyle(color: AppTheme.textMuted)),
                             const SizedBox(height: 16),
                             AppButton.secondary(
                               label: 'ADD USER',
@@ -300,19 +368,23 @@ class _CompanyUsersScreenState extends State<CompanyUsersScreen> {
                               decoration: BoxDecoration(
                                 color: AppTheme.cardBg,
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: AppTheme.steelBlue.withOpacity(0.3)),
+                                border: Border.all(
+                                    color: AppTheme.steelBlue.withOpacity(0.3)),
                               ),
                               child: Row(
                                 children: [
                                   CircleAvatar(
-                                    backgroundColor: _roleColor(role).withOpacity(0.2),
+                                    backgroundColor:
+                                        _roleColor(role).withOpacity(0.2),
                                     radius: 20,
-                                    child: Icon(_roleIcon(role), color: _roleColor(role), size: 20),
+                                    child: Icon(_roleIcon(role),
+                                        color: _roleColor(role), size: 20),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(u['full_name'] ?? '',
                                             style: const TextStyle(
@@ -320,12 +392,14 @@ class _CompanyUsersScreenState extends State<CompanyUsersScreen> {
                                                 fontWeight: FontWeight.w600)),
                                         Text(u['email'] ?? '',
                                             style: const TextStyle(
-                                                color: AppTheme.textMuted, fontSize: 12)),
+                                                color: AppTheme.textMuted,
+                                                fontSize: 12)),
                                       ],
                                     ),
                                   ),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
                                       color: _roleColor(role).withOpacity(0.15),
                                       borderRadius: BorderRadius.circular(20),
